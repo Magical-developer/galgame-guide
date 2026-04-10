@@ -1,0 +1,16 @@
+<svg width="800" height="1000" viewBox="0 0 800 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="1000" fill="#0D1118"/>
+  <rect x="36" y="36" width="728" height="928" rx="36" fill="url(#paint0_linear)"/>
+  <rect x="92" y="116" width="616" height="768" rx="28" fill="#111825" stroke="#D6A96B" stroke-opacity="0.35" stroke-width="2"/>
+  <circle cx="400" cy="342" r="96" fill="#D6A96B" fill-opacity="0.18"/>
+  <path d="M400 286C359.131 286 326 319.131 326 360C326 400.869 359.131 434 400 434C440.869 434 474 400.869 474 360C474 319.131 440.869 286 400 286ZM400 404C375.699 404 356 384.301 356 360C356 335.699 375.699 316 400 316C424.301 316 444 335.699 444 360C444 384.301 424.301 404 400 404Z" fill="#F3E7D7" fill-opacity="0.75"/>
+  <path d="M244 690C244 605.322 312.322 537 397 537H403C487.678 537 556 605.322 556 690V710H244V690Z" fill="#F3E7D7" fill-opacity="0.75"/>
+  <text x="400" y="790" text-anchor="middle" fill="#F3E7D7" fill-opacity="0.92" font-family="Georgia, serif" font-size="46" letter-spacing="8">GAME GUIDE</text>
+  <text x="400" y="844" text-anchor="middle" fill="#D6A96B" fill-opacity="0.92" font-family="Georgia, serif" font-size="26" letter-spacing="6">COVER UNAVAILABLE</text>
+  <defs>
+    <linearGradient id="paint0_linear" x1="120" y1="84" x2="696" y2="940" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#151C28"/>
+      <stop offset="1" stop-color="#0B0F17"/>
+    </linearGradient>
+  </defs>
+</svg>
