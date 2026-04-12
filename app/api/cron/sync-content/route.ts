@@ -4,11 +4,19 @@ import { NextResponse } from "next/server";
 import { siteConfig } from "@/lib/config";
 
 function isAuthorized(authorization: string | null, userAgent: string | null) {
+  // Allow manual requests with the correct secret header
   if (siteConfig.cronSecret && authorization === `Bearer ${siteConfig.cronSecret}`) {
     return true;
   }
 
-  return userAgent?.includes("vercel-cron") ?? false;
+  // Vercel Cron requests have a specific user-agent
+  if (userAgent?.includes("vercel-cron")) {
+    return true;
+  }
+
+  // For debugging: allow manual access if CRON_SECRET is not set (ONLY for dev/test)
+  // In production, you MUST set CRON_SECRET
+  return false;
 }
 
 export async function GET() {
@@ -16,32 +24,26 @@ export async function GET() {
   const authorization = requestHeaders.get("authorization");
   const userAgent = requestHeaders.get("user-agent");
 
+  console.log("[Cron] Incoming request:", { userAgent, hasAuth: !!authorization });
+
   if (!isAuthorized(authorization, userAgent)) {
+    console.error("[Cron] Unauthorized access attempt.");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const token = process.env.VERCEL_TOKEN;
-  // Vercel auto-injects VERCEL_PROJECT_ID and VERCEL_ORG_ID in every deployment
   const projectId = process.env.VERCEL_PROJECT_ID;
   const teamId = process.env.VERCEL_ORG_ID;
 
-  if (!token) {
+  if (!token || !projectId) {
+    console.error("[Cron] Missing environment variables:", {
+      hasToken: !!token,
+      projectId,
+    });
     return NextResponse.json(
       {
         ok: false,
-        message:
-          "VERCEL_TOKEN is not set. Create a Vercel API token and add it as an environment variable.",
-      },
-      { status: 500 }
-    );
-  }
-
-  if (!projectId) {
-    return NextResponse.json(
-      {
-        ok: false,
-        message:
-          "VERCEL_PROJECT_ID is not available. This is normally injected automatically by Vercel.",
+        message: "VERCEL_TOKEN or VERCEL_PROJECT_ID is not set in environment variables.",
       },
       { status: 500 }
     );
