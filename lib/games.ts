@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { db, type GameRow, type GuideRow } from "@/lib/db";
+import { db, type GameRow, type GuideRow } from "./db";
 import type { GameRecord, GuideDocument } from "@/lib/types/game";
 
 // Helper to map DB row to GameRecord
