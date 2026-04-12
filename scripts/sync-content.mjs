@@ -1,4 +1,6 @@
 import crypto from "node:crypto";
+import fs from "node:fs/promises";
+import path from "node:path";
 import nextEnv from "@next/env";
 import { createClient } from "@libsql/client";
 
@@ -29,6 +31,89 @@ const db = createClient({
   url: config.dbUrl,
   authToken: config.dbToken,
 });
+
+async function initDatabase() {
+  console.log("[Sync] Ensuring database tables exist...");
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS games (
+      id TEXT PRIMARY KEY,
+      slug TEXT UNIQUE NOT NULL,
+      title TEXT NOT NULL,
+      summary TEXT,
+      cover TEXT,
+      tags TEXT,
+      download TEXT,
+      download_label TEXT,
+      views INTEGER DEFAULT 0,
+      source_id TEXT,
+      source_hash TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      published_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  await db.execute(`CREATE INDEX IF NOT EXISTS idx_games_slug ON games(slug)`);
+  await db.execute(`CREATE INDEX IF NOT EXISTS idx_games_views ON games(views DESC)`);
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS guides (
+      slug TEXT PRIMARY KEY,
+      markdown TEXT,
+      provider TEXT,
+      model TEXT,
+      generated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (slug) REFERENCES games(slug) ON DELETE CASCADE
+    )
+  `);
+}
+
+async function importLocalData() {
+  const gamesPath = path.join(projectRoot, "data", "generated", "games.json");
+  try {
+    const data = await fs.readFile(gamesPath, "utf8");
+    const games = JSON.parse(data);
+    console.log(`[Sync] Found ${games.length} local games in JSON. Checking for import...`);
+
+    for (const game of games) {
+      const existing = await db.execute({
+        sql: "SELECT 1 FROM games WHERE slug = ? LIMIT 1",
+        args: [game.slug],
+      });
+
+      if (existing.rows.length > 0) continue;
+
+      console.log(`[Sync] Importing local game: ${game.title}`);
+      
+      let markdown = "";
+      try {
+        const contentPath = path.join(projectRoot, "data", "generated", "content", `${game.slug}.json`);
+        const contentData = await fs.readFile(contentPath, "utf8");
+        markdown = JSON.parse(contentData).markdown || "";
+      } catch (e) {
+        markdown = buildFallbackContent({ title: game.title, tags: game.tags });
+      }
+
+      await db.execute({
+        sql: `INSERT INTO games (id, slug, title, summary, cover, tags, download, download_label, views, source_id, source_hash, updated_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+        args: [
+          crypto.randomUUID(), game.slug, game.title, game.summary, game.cover, 
+          JSON.stringify(game.tags), game.download, game.downloadLabel, 
+          game.views, game.sourceId, game.sourceHash
+        ],
+      });
+
+      if (markdown) {
+        await db.execute({
+          sql: `INSERT INTO guides (slug, markdown, provider, model, generated_at)
+                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+          args: [game.slug, markdown, "local-import", "original"],
+        });
+      }
+    }
+  } catch (err) {
+    console.log("[Sync] No local JSON data found or failed to read. Skipping import.");
+  }
+}
 
 const hasAiConfig = Boolean(config.aiBaseUrl && config.aiApiKey && config.aiModel);
 
@@ -147,6 +232,9 @@ async function fetchSourcePosts() {
 }
 
 async function main() {
+  await initDatabase();
+  await importLocalData();
+
   console.log("[Sync] Fetching posts from source API...");
   const posts = await fetchSourcePosts();
   console.log(`[Sync] Found ${posts.length} posts.`);
