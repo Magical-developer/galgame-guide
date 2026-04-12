@@ -14,10 +14,10 @@ const replaceTemplateToken = (
 ) => template.replaceAll(`{${token}}`, encodeURIComponent(value));
 
 export const siteConfig = {
-  name: "次元轨迹 - Galgame 攻略与全CG存档索引",
-  headline: "提供最新 Galgame 攻略、全CG 存档及全结局路线指南。",
+  name: "次元绅士指南 - 绅游推荐与 Galgame 全结局攻略索引",
+  headline: "提供最全的绅游推荐、Galgame 全结局攻略及全CG 存档指南。",
   description:
-    "最全的 Galgame 攻略平台，涵盖热门黄油全CG解锁、全结局路线、存档路径及汉化资源索引。为您提供详尽的剧情分歧点说明与关键选项指南，助力达成完美真结局。",
+    "次元绅士指南是专业的绅游推荐与 Galgame 攻略站。深耕视觉小说领域，为您提供详尽的绅士游戏剧情解析、全结局路线指南、回想场景解锁条件及存档路径说明。助您达成每一个真结局。",
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
   mainSiteUrl: process.env.NEXT_PUBLIC_MAIN_SITE_URL ?? "https://www.krzacg.com",
   mainSiteGameUrlTemplate:
