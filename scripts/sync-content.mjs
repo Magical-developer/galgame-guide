@@ -196,14 +196,37 @@ async function fetchSourcePosts() {
   return items;
 }
 
+const cleanTitle = (value) => {
+  // 移除 【...】 和 [...] 及其内容
+  let clean = value.replace(/[\u3010\u3011]|\[.*?\]/g, " ").trim();
+  
+  // 移除版本号 (v0.x, Ver.x, v2.x)
+  clean = clean.replace(/[vV](er\.?\s?)?\d+(\.\d+)*/g, " ");
+  
+  // 移除度盘、网盘、解压、大小、GB、G、MB、M、PC、安卓、中文、官中、汉化、新作、个人等信息
+  clean = clean.replace(/(度盘|网盘|解压|大小|GB|G|MB|M|PC|安卓|中文|官中|汉化|新作|个人|新作).*$/gi, " ");
+  
+  // 移除多余的斜杠、短横线和空白
+  clean = clean.replace(/\/+/g, " ").replace(/-+/g, " ").replace(/\s+/g, " ").trim();
+
+  // 如果清洗后太短，回退到原标题的前部分
+  if (clean.length < 2) return value.split(" ")[0];
+
+  return clean;
+};
+
 function normalizePost(post) {
   const tags = Array.isArray(post.tags)
     ? post.tags.map((tag) => tag.name).filter(Boolean)
     : [];
   const tagLabel = tags.slice(0, 3).join("、");
+  const cleanedTitle = cleanTitle(post.title);
+  
+  // 为摘要和标题注入 SEO 词汇
+  const seoTitle = `${cleanedTitle} 攻略解析 | 全结局路线 | 全CG回想解锁`;
   const summary = tagLabel
-    ? `${post.title} 攻略整理，含全CG解锁、存档说明和路线要点，题材标签：${tagLabel}。`
-    : `${post.title} 攻略整理，含全CG解锁、存档说明和路线要点。`;
+    ? `${cleanedTitle} 专业的绅士游戏攻略与绅游推荐，包含 ${tagLabel} 核心解析、全结局达成条件及完美存档说明。`
+    : `${cleanedTitle} 深度攻略与绅士游戏指南，提供全结局路线、回想场景解锁及存档路径解析。`;
 
   const resource = Array.isArray(post.resources) ? post.resources[0] : undefined;
   const contentImages = extractImageSources(post.content);
@@ -212,7 +235,7 @@ function normalizePost(post) {
   const game = {
     sourceId: post._id,
     slug: slugify(post.title),
-    title: post.title,
+    title: seoTitle,
     tags,
     summary,
     cover: withAssetPrefix(coverCandidate),

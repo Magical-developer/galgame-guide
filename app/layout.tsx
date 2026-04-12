@@ -49,6 +49,48 @@ export const metadata: Metadata = {
   },
 };
 
+function Footer() {
+  return (
+    <footer className="mt-auto border-t border-white/10 bg-black/40 py-12 backdrop-blur-xl">
+      <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-12">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="space-y-4">
+            <h3 className="font-display text-xl text-[--ink-strong]">{siteConfig.name}</h3>
+            <p className="text-sm leading-6 text-[--ink-soft]">
+              专注于绅游推荐、Galgame 全结局攻略及全图存档指南的专业索引门户。
+            </p>
+          </div>
+          <div className="space-y-4">
+            <h4 className="text-xs font-bold uppercase tracking-widest text-white/40">快速导航</h4>
+            <ul className="grid gap-2 text-sm text-[--ink-soft]">
+              <li><Link href="/" className="hover:text-[--accent]">网站首页</Link></li>
+              <li><Link href="/archive" className="hover:text-[--accent]">攻略归档</Link></li>
+              <li><a href={siteConfig.mainSiteUrl} target="_blank" rel="noreferrer" className="hover:text-[--accent]">前往主站</a></li>
+            </ul>
+          </div>
+          <div className="space-y-4">
+            <h4 className="text-xs font-bold uppercase tracking-widest text-white/40">关于与合规</h4>
+            <ul className="grid gap-2 text-sm text-[--ink-soft]">
+              <li><Link href="/about" className="hover:text-[--accent]">关于我们</Link></li>
+              <li><Link href="/privacy" className="hover:text-[--accent]">隐私政策</Link></li>
+              <li><Link href="/contact" className="hover:text-[--accent]">免责声明</Link></li>
+            </ul>
+          </div>
+          <div className="space-y-4">
+            <h4 className="text-xs font-bold uppercase tracking-widest text-white/40">联系与支持</h4>
+            <p className="text-sm text-[--ink-soft]">
+              若有内容纠错或版权反馈，请查阅免责声明页面的联系方式。
+            </p>
+          </div>
+        </div>
+        <div className="mt-12 border-t border-white/5 pt-8 text-center text-xs text-white/30">
+          <p>© {new Date().getFullYear()} 次元绅士指南. All Rights Reserved.</p>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -56,7 +98,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN">
-      <body>{children}</body>
+      <body className="flex min-h-screen flex-col">
+        {children}
+        <Footer />
+      </body>
     </html>
   );
 }
