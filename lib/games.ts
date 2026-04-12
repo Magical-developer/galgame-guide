@@ -1,40 +1,61 @@
 import { cache } from "react";
-import { readFile } from "node:fs/promises";
-import path from "node:path";
-
+import { db, type GameRow, type GuideRow } from "@/lib/db";
 import type { GameRecord, GuideDocument } from "@/lib/types/game";
 
-const generatedRoot = path.join(process.cwd(), "data", "generated");
-
-const readJson = cache(async <T,>(filePath: string): Promise<T> => {
-  const payload = await readFile(filePath, "utf8");
-  return JSON.parse(payload) as T;
+// Helper to map DB row to GameRecord
+const mapRowToGame = (row: any): GameRecord => ({
+  sourceId: row.source_id,
+  slug: row.slug,
+  title: row.title,
+  tags: JSON.parse(row.tags || "[]"),
+  summary: row.summary,
+  cover: row.cover,
+  download: row.download,
+  downloadLabel: row.download_label,
+  views: Number(row.views || 0),
+  createdAt: row.created_at,
+  updatedAt: row.updated_at,
+  sourceHash: row.source_hash || "", // Fill the missing property
 });
 
-export const getAllGames = cache(async () => {
-  const games = await readJson<GameRecord[]>(
-    path.join(generatedRoot, "games.json")
-  );
-
-  return games.toSorted((left, right) => right.views - left.views);
+export const getAllGames = cache(async (): Promise<GameRecord[]> => {
+  const result = await db.execute("SELECT * FROM games ORDER BY published_at DESC");
+  return result.rows.map(mapRowToGame);
 });
 
-export const getFeaturedGames = cache(async (limit = 9) => {
-  const games = await getAllGames();
-  return games.slice(0, limit);
+export const getFeaturedGames = cache(async (limit = 9): Promise<GameRecord[]> => {
+  const result = await db.execute({
+    sql: "SELECT * FROM games ORDER BY views DESC LIMIT ?",
+    args: [limit],
+  });
+  return result.rows.map(mapRowToGame);
 });
 
-export const getGameBySlug = cache(async (slug: string) => {
-  const games = await getAllGames();
-  return games.find((game) => game.slug === slug) ?? null;
+export const getGameBySlug = cache(async (slug: string): Promise<GameRecord | null> => {
+  const result = await db.execute({
+    sql: "SELECT * FROM games WHERE slug = ?",
+    args: [slug],
+  });
+  if (result.rows.length === 0) return null;
+  return mapRowToGame(result.rows[0]);
 });
 
-export const getGuideBySlug = cache(async (slug: string) => {
-  try {
-    return await readJson<GuideDocument>(
-      path.join(generatedRoot, "content", `${slug}.json`)
-    );
-  } catch {
-    return null;
-  }
+export const getGuideBySlug = cache(async (slug: string): Promise<GuideDocument | null> => {
+  const result = await db.execute({
+    sql: "SELECT * FROM guides WHERE slug = ?",
+    args: [slug],
+  });
+  
+  if (result.rows.length === 0) return null;
+  
+  const row = result.rows[0] as any;
+  return {
+    slug: row.slug,
+    title: "", // Title is managed by the page component
+    markdown: row.markdown,
+    generatedAt: row.generated_at,
+    sourceHash: "", // Currently empty to satisfy the type
+    provider: row.provider,
+    model: row.model,
+  };
 });

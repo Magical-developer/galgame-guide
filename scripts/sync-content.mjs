@@ -1,112 +1,85 @@
 import crypto from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import nextEnv from "@next/env";
+import { createClient } from "@libsql/client";
 
 const { loadEnvConfig } = nextEnv;
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const projectRoot = path.resolve(__dirname, "..");
-const generatedRoot = path.join(projectRoot, "data", "generated");
-const generatedContentRoot = path.join(generatedRoot, "content");
-
+const projectRoot = process.cwd();
 loadEnvConfig(projectRoot);
 
 const config = {
-  sourceApiUrl:
-    process.env.CONTENT_SOURCE_API_URL ??
-    "https://service.krzacg.com/api/posts/hot-feed",
-  sourceAssetBaseUrl:
-    process.env.CONTENT_SOURCE_ASSET_BASE_URL ?? "https://upload.krzacg.com",
+  sourceApiUrl: process.env.CONTENT_SOURCE_API_URL ?? "https://service.krzacg.com/api/posts/hot-feed",
+  sourceAssetBaseUrl: process.env.CONTENT_SOURCE_ASSET_BASE_URL ?? "https://upload.krzacg.com",
   pageSize: Number(process.env.CONTENT_SYNC_PAGE_SIZE ?? 20),
   maxPages: Number(process.env.CONTENT_SYNC_MAX_PAGES ?? 5),
   aiBaseUrl: process.env.AI_BASE_URL ?? "",
   aiApiKey: process.env.AI_API_KEY ?? "",
   aiModel: process.env.AI_MODEL ?? "",
+  dbUrl: process.env.TURSO_DATABASE_URL,
+  dbToken: process.env.TURSO_AUTH_TOKEN,
 };
 
-const hasAiConfig = Boolean(
-  config.aiBaseUrl && config.aiApiKey && config.aiModel
-);
+if (!config.dbUrl) {
+  console.error("TURSO_DATABASE_URL is not set. Sync aborted.");
+  process.exit(1);
+}
+
+const db = createClient({
+  url: config.dbUrl,
+  authToken: config.dbToken,
+});
+
+const hasAiConfig = Boolean(config.aiBaseUrl && config.aiApiKey && config.aiModel);
 
 const slugify = (value) => {
-  const latin = value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-
-  if (latin) {
-    return latin.slice(0, 72);
-  }
-
+  const latin = value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  if (latin) return latin.slice(0, 72);
   return `game-${crypto.createHash("sha1").update(value).digest("hex").slice(0, 10)}`;
 };
 
-const stripHtml = (value) =>
-  value
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-
-const extractImageSources = (html) => {
-  const matches = [...html.matchAll(/<img[^>]+src="([^"]+)"/g)];
-  return matches.map((match) => match[1]).filter(Boolean);
-};
-
-const withAssetPrefix = (cover) => {
-  if (!cover) {
-    return "";
-  }
-
-  if (cover.startsWith("http://") || cover.startsWith("https://")) {
-    return cover;
-  }
-
-  return new URL(cover, `${config.sourceAssetBaseUrl}/`).toString();
+const cleanTitle = (value) => {
+  let clean = value.replace(/[\u3010\u3011]|\[.*?\]/g, " ").trim();
+  clean = clean.replace(/[vV](er\.?\s?)?\d+(\.\d+)*/g, " ");
+  clean = clean.replace(/(度盘|网盘|解压|大小|GB|G|MB|M|PC|安卓|中文|官中|汉化|新作|个人|新作).*$/gi, " ");
+  clean = clean.replace(/\/+/g, " ").replace(/-+/g, " ").replace(/\s+/g, " ").trim();
+  if (clean.length < 2) return value.split(" ")[0];
+  return clean;
 };
 
 const buildFallbackContent = (game) => `## 游戏剧情简介
-${game.title} 是一款深度融合了 ${game.tags.slice(0, 3).join("、")} 元素的 Galgame 新作。本作以其独特的叙事风格和精美的原画设计，在视觉小说领域获得了极高的关注度。
+${game.title} 是一款深度融合了 ${game.tags.join("、")} 元素的精品作。本作以其独特的叙事风格和精美的原画设计，在视觉小说领域获得了极高的关注度。
 
 ## 核心推荐理由
-如果你偏好 ${game.tags.slice(0, 2).join("、")} 题材，那么 ${game.title} 绝对是不容错过的佳作。本作不仅在剧情分支设计上极其考究，更在角色情感刻画与事件连锁机制上达到了行业顶尖水平。
+如果你偏好 ${game.tags.slice(0, 2).join("、")} 题材，那么本作绝对是不容错过的佳作。
 
 ## 完美攻略全流程
-- **共通线要点**：在进入角色分歧点前，建议在第 3-5 个关键选项处保留独立存档。
-- **路线切分**：优先推进主线剧情，确认核心女主角的情感倾向。
-- **结局达成**：注意关键选项对好感度的影响，避免因单一选项失误进入 Bad End。
+建议在进入分歧点前保留独立存档。优先推进主线剧情，确认核心女主角的情感倾向。
 
 ## 全CG与回想场景解锁
-本作的全CG 解锁主要依赖于全结局的达成。建议玩家在完成一周目后，利用快进功能回收剩余的分支场景。部分动态 CG 可能需要特定的汉化補丁或解码补丁支持方能完整呈现。
-
-## 存档管理与安装说明
-推荐采用多栏位存档策略：公共线结束前保留 1 个全局存档，各角色分歧处分别留 1-2 个独立存档。对于非官方版本的汉化游戏，请务必确认存档路径是否包含中文字符，以免造成数据损坏。
+本作的全CG 解锁主要依赖于全结局的达成。建议玩家在完成一周目后，利用快进功能回收剩余的分支场景。
 
 ## 常见问题 FAQ
-### 这款游戏是否有官方中文？
-请关注官方公告或汉化组动态。目前市面上流通的多为精修汉化版或 AI 润色版。
-
 ### 如何快速达成真结局？
 建议参考本站整理的完美路线图，确保所有前置事件均已正确触发。
 
 ## 类似题材作品推荐
-如果你喜欢 ${game.title} 的画风或剧情逻辑，可以优先查阅带有 ${game.tags.slice(0, 2).join("、")} 标签的其他作品，这些同类佳作往往有着极高的重合度。`;
+如果你喜欢本作的画风，可以继续探索同类带有 ${game.tags.slice(0, 2).join("、")} 标签的作品。`;
 
 const buildPrompt = (game) => `
-请基于下面的游戏信息输出一篇中文 markdown 攻略文章，只输出正文。
+你是一名资深视觉小说（Visual Novel）与绅士游戏攻略索引编辑，你所在的项目叫“次元绅士指南”，你的职责是根据提供的游戏基础信息，输出一篇专业、硬核且对搜索引擎优化（SEO）友好的中文攻略指南。
 
+【游戏基础信息】
 标题：${game.title}
 标签：${game.tags.join("、")}
-简介：${game.summary}
+原始简介：${game.summary}
 
-要求：
-1. 全文 800-1200 字，要求内容详尽、逻辑清晰。
-2. 必须包含关键词：攻略、全CG存档、汉化补丁、全结局路线、真结局条件、分歧选项。
-3. 只能输出 markdown 正文，严禁出现“由于是在 Vercel 上部署”或“开发者自白”等口水话。
-4. 严格包含这些二级标题：
+【内容要求】
+1. **风格定位**：文字要专业、懂行。禁止出现“开发者自白”、“项目说明”或“由于是部署在Vercel...”等废话。
+2. **详细程度**：全文控制在 800-1200 字之间。
+3. **SEO 关键词**：绅游推荐、Galgame攻略教程、绅士游戏全CG存档、汉化补丁下载说明、完美全结局路线、真结局达成条件、回想内容解锁、存档路径说明、分歧选项。
+4. **合规提示**：使用“回想场景”、“特殊事件”、“动态CG”、“解锁特定路线”等行业术语，严禁露骨淫秽词语。
+5. **格式规范**：只能输出 Markdown 格式的正文内容。
+
+【必须包含的二级标题】
 ## 游戏剧情简介
 ## 核心推荐理由
 ## 完美攻略全流程
@@ -117,9 +90,7 @@ const buildPrompt = (game) => `
 `;
 
 async function requestAiMarkdown(game) {
-  if (!hasAiConfig) {
-    return buildFallbackContent(game);
-  }
+  if (!hasAiConfig) return buildFallbackContent(game);
 
   const endpoint = new URL("/v1/chat/completions", config.aiBaseUrl).toString();
   const response = await fetch(endpoint, {
@@ -134,7 +105,7 @@ async function requestAiMarkdown(game) {
       messages: [
         {
           role: "system",
-          content: "你是一名资深 Galgame 攻略编辑。你编写的内容是技术性的游戏指南，侧重于系统逻辑、路线分歧、存档路径和全CG收集，严禁使用过于露骨的淫秽词语，以确保内容在不触发模型审核的前提下，让老玩家能秒懂。",
+          content: "你是一名资深 Galgame 攻略编辑。你编写的内容是技术性的游戏指南，侧重于系统逻辑、路线分歧、存档路径和全CG收集，严禁使用过于露骨的淫秽词语。",
         },
         {
           role: "user",
@@ -144,203 +115,86 @@ async function requestAiMarkdown(game) {
     }),
   });
 
-  if (!response.ok) {
-    throw new Error(`AI request failed: ${response.status} ${await response.text()}`);
-  }
+  if (!response.ok) return buildFallbackContent(game);
 
   const payload = await response.json();
   const content = payload?.choices?.[0]?.message?.content?.trim();
-
-  if (!content) {
-    throw new Error("AI response did not include markdown content.");
-  }
-
-  return content;
+  return content || buildFallbackContent(game);
 }
 
 async function fetchSourcePosts() {
   const items = [];
-
   for (let page = 1; page <= config.maxPages; page += 1) {
     const url = new URL(config.sourceApiUrl);
     url.searchParams.set("page", String(page));
     url.searchParams.set("limit", String(config.pageSize));
     url.searchParams.set("sort", "views");
 
-    const response = await fetch(url, {
-      cache: "no-store",
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-        Accept: "application/json, text/plain, */*",
-        "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-        Referer: "https://www.krzacg.com/",
-        Origin: "https://www.krzacg.com",
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Source API failed: ${response.status} ${await response.text()}`);
-    }
-
-    const payload = await response.json();
-    const batch = Array.isArray(payload?.data) ? payload.data : [];
-
-    if (batch.length === 0) {
-      break;
-    }
-
-    items.push(...batch);
+    try {
+      const response = await fetch(url, {
+        headers: { "User-Agent": "Mozilla/5.0 Chrome/124.0.0.0 Safari/537.36" }
+      });
+      if (!response.ok) break;
+      const payload = await response.json();
+      const batch = Array.isArray(payload?.data) ? payload.data : [];
+      if (batch.length === 0) break;
+      items.push(...batch);
+    } catch { break; }
   }
-
   return items;
 }
 
-const cleanTitle = (value) => {
-  // 移除 【...】 和 [...] 及其内容
-  let clean = value.replace(/[\u3010\u3011]|\[.*?\]/g, " ").trim();
-  
-  // 移除版本号 (v0.x, Ver.x, v2.x)
-  clean = clean.replace(/[vV](er\.?\s?)?\d+(\.\d+)*/g, " ");
-  
-  // 移除度盘、网盘、解压、大小、GB、G、MB、M、PC、安卓、中文、官中、汉化、新作、个人等信息
-  clean = clean.replace(/(度盘|网盘|解压|大小|GB|G|MB|M|PC|安卓|中文|官中|汉化|新作|个人|新作).*$/gi, " ");
-  
-  // 移除多余的斜杠、短横线和空白
-  clean = clean.replace(/\/+/g, " ").replace(/-+/g, " ").replace(/\s+/g, " ").trim();
-
-  // 如果清洗后太短，回退到原标题的前部分
-  if (clean.length < 2) return value.split(" ")[0];
-
-  return clean;
-};
-
-function normalizePost(post) {
-  const tags = Array.isArray(post.tags)
-    ? post.tags.map((tag) => tag.name).filter(Boolean)
-    : [];
-  const tagLabel = tags.slice(0, 3).join("、");
-  const cleanedTitle = cleanTitle(post.title);
-  
-  // 为摘要和标题注入 SEO 词汇
-  const seoTitle = `${cleanedTitle} 攻略解析 | 全结局路线 | 全CG回想解锁`;
-  const summary = tagLabel
-    ? `${cleanedTitle} 专业的绅士游戏攻略与绅游推荐，包含 ${tagLabel} 核心解析、全结局达成条件及完美存档说明。`
-    : `${cleanedTitle} 深度攻略与绅士游戏指南，提供全结局路线、回想场景解锁及存档路径解析。`;
-
-  const resource = Array.isArray(post.resources) ? post.resources[0] : undefined;
-  const contentImages = extractImageSources(post.content);
-  const coverCandidate = contentImages[0] ?? post.cover;
-
-  const game = {
-    sourceId: post._id,
-    slug: slugify(post.title),
-    title: seoTitle,
-    tags,
-    summary,
-    cover: withAssetPrefix(coverCandidate),
-    download: resource?.url ?? "",
-    downloadLabel: resource?.platform ?? post.download_platforms?.[0] ?? "资源链接",
-    views: Number(post.views ?? 0),
-    createdAt: post.created_at,
-    updatedAt: post.updated_at,
-  };
-
-  return {
-    ...game,
-    sourceHash: crypto
-      .createHash("sha1")
-      .update([game.sourceId, game.updatedAt].join("|"))
-      .digest("hex"),
-  };
-}
-
-async function readExistingGuide(slug) {
-  try {
-    const payload = await readFile(
-      path.join(generatedContentRoot, `${slug}.json`),
-      "utf8"
-    );
-    return JSON.parse(payload);
-  } catch {
-    return null;
-  }
-}
-
-async function ensureDirectories() {
-  await mkdir(generatedRoot, { recursive: true });
-  await mkdir(generatedContentRoot, { recursive: true });
-}
-
-async function readExistingGames() {
-  try {
-    const payload = await readFile(path.join(generatedRoot, "games.json"), "utf8");
-    return JSON.parse(payload);
-  } catch {
-    return [];
-  }
-}
-
 async function main() {
-  await ensureDirectories();
+  console.log("[Sync] Fetching posts from source API...");
+  const posts = await fetchSourcePosts();
+  console.log(`[Sync] Found ${posts.length} posts.`);
 
-  let posts;
-  try {
-    posts = await fetchSourcePosts();
-  } catch (error) {
-    console.warn(`Source API unavailable, keeping existing data. Error: ${error.message}`);
-    const existingGames = await readExistingGames();
-    if (existingGames.length === 0) {
-      console.error("No existing games data and source API failed. Build may produce empty site.");
-      process.exitCode = 1;
-    } else {
-      console.log(`Using ${existingGames.length} cached game records from previous sync.`);
-    }
-    return;
-  }
+  for (const post of posts) {
+    const tags = Array.isArray(post.tags) ? post.tags.map((t) => t.name).filter(Boolean) : [];
+    const cleanedTitle = cleanTitle(post.title);
+    const slug = slugify(post.title);
+    const sourceHash = crypto.createHash("sha1").update([post._id, post.updated_at].join("|")).digest("hex");
 
-  const games = posts.map(normalizePost);
+    // Check if we already have this version in DB
+    const existing = await db.execute({
+      sql: "SELECT source_hash FROM games WHERE slug = ?",
+      args: [slug],
+    });
 
-  for (const game of games) {
-    const existingGuide = await readExistingGuide(game.slug);
-
-    if (existingGuide?.sourceHash === game.sourceHash) {
+    if (existing.rows[0]?.source_hash === sourceHash) {
+      console.log(`[Sync] Skipping "${cleanedTitle}" (already up to date)`);
       continue;
     }
 
-    let markdown;
-    try {
-      markdown = await requestAiMarkdown(game);
-    } catch (error) {
-      console.warn(`AI generation failed for "${game.title}", using fallback. Error: ${error.message}`);
-      markdown = buildFallbackContent(game);
-    }
+    console.log(`[Sync] Processing "${cleanedTitle}"...`);
+    const markdown = await requestAiMarkdown({ title: cleanedTitle, tags, summary: post.title });
 
-    const guideDocument = {
-      slug: game.slug,
-      title: game.title,
-      markdown,
-      generatedAt: new Date().toISOString(),
-      sourceHash: game.sourceHash,
-      provider: hasAiConfig ? config.aiBaseUrl : "local-fallback",
-      model: hasAiConfig ? config.aiModel : "fallback-template",
-    };
+    // UPSERT Game
+    await db.execute({
+      sql: `INSERT INTO games (id, slug, title, summary, cover, tags, download, download_label, views, source_id, source_hash, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(slug) DO UPDATE SET 
+              title=excluded.title, summary=excluded.summary, cover=excluded.cover, 
+              tags=excluded.tags, download=excluded.download, views=excluded.views, 
+              source_hash=excluded.source_hash, updated_at=CURRENT_TIMESTAMP`,
+      args: [
+        crypto.randomUUID(), slug, `${cleanedTitle} 攻略解析 | 全结局路线 | 全CG回想解锁`, 
+        post.title, post.cover, JSON.stringify(tags), post.resources?.[0]?.url || "", 
+        post.resources?.[0]?.platform || "资源链接", post.views || 0, post._id, sourceHash
+      ],
+    });
 
-    await writeFile(
-      path.join(generatedContentRoot, `${game.slug}.json`),
-      `${JSON.stringify(guideDocument, null, 2)}\n`
-    );
+    // UPSERT Guide
+    await db.execute({
+      sql: `INSERT INTO guides (slug, markdown, provider, model, generated_at)
+            VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(slug) DO UPDATE SET 
+              markdown=excluded.markdown, generated_at=CURRENT_TIMESTAMP`,
+      args: [slug, markdown, config.aiBaseUrl, config.aiModel],
+    });
   }
 
-  await writeFile(
-    path.join(generatedRoot, "games.json"),
-    `${JSON.stringify(games, null, 2)}\n`
-  );
-
-  console.log(`Synced ${games.length} game records.`);
+  console.log("[Sync] Content synchronization complete.");
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+main().catch(console.error);
