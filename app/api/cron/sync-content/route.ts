@@ -5,7 +5,10 @@ import { siteConfig } from "@/lib/config";
 
 function isAuthorized(authorization: string | null, userAgent: string | null) {
   // Allow manual requests with the correct secret header
-  if (siteConfig.cronSecret && authorization === `Bearer ${siteConfig.cronSecret}`) {
+  if (
+    siteConfig.cronSecret &&
+    authorization === `Bearer ${siteConfig.cronSecret}`
+  ) {
     return true;
   }
 
@@ -22,7 +25,10 @@ export async function GET() {
   const authorization = requestHeaders.get("authorization");
   const userAgent = requestHeaders.get("user-agent");
 
-  console.log("[Cron] Incoming request:", { userAgent, hasAuth: !!authorization });
+  console.log("[Cron] Incoming request:", {
+    userAgent,
+    hasAuth: !!authorization,
+  });
 
   if (!isAuthorized(authorization, userAgent)) {
     console.error("[Cron] Unauthorized access attempt.");
@@ -34,19 +40,24 @@ export async function GET() {
   const teamId = process.env.VERCEL_ORG_ID;
 
   if (!token || !projectId) {
-    console.error("[Cron] Configuration error: VERCEL_TOKEN or VERCEL_PROJECT_ID is missing from environment variables.");
+    console.error(
+      "[Cron] Configuration error: VERCEL_TOKEN or VERCEL_PROJECT_ID is missing from environment variables.",
+    );
     return NextResponse.json(
       {
         ok: false,
         message: "Server configuration error (missing environment variables).",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
   try {
-    console.log("[Cron] Fetching latest production deployment for project:", projectId);
-    
+    console.log(
+      "[Cron] Fetching latest production deployment for project:",
+      projectId,
+    );
+
     // Find the latest successful production deployment
     const listParams = new URLSearchParams({
       projectId,
@@ -64,10 +75,18 @@ export async function GET() {
 
     if (!listResponse.ok) {
       const errorText = await listResponse.text();
-      console.error("[Cron] Vercel List API failed:", listResponse.status, errorText);
+      console.error(
+        "[Cron] Vercel List API failed:",
+        listResponse.status,
+        errorText,
+      );
       return NextResponse.json(
-        { ok: false, message: `Vercel List API error: ${listResponse.status}`, details: errorText },
-        { status: 502 }
+        {
+          ok: false,
+          message: `Vercel List API error: ${listResponse.status}`,
+          details: errorText,
+        },
+        { status: 502 },
       );
     }
 
@@ -78,7 +97,7 @@ export async function GET() {
       console.warn("[Cron] No production deployment found to redeploy.");
       return NextResponse.json(
         { ok: false, message: "No production deployments found to redeploy." },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -92,41 +111,61 @@ export async function GET() {
       `https://api.vercel.com/v13/deployments?${redeployParams.toString()}`,
       {
         method: "POST",
-        headers: { 
-          Authorization: `Bearer ${token}`, 
-          "Content-Type": "application/json" 
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           deploymentId: latestId,
           name: "galgame-guide",
           target: "production",
         }),
-      }
+      },
     );
 
     if (!redeployResponse.ok) {
       const errorText = await redeployResponse.text();
-      console.error("[Cron] Vercel Redeploy API failed:", redeployResponse.status, errorText);
+      console.error(
+        "[Cron] Vercel Redeploy API failed:",
+        redeployResponse.status,
+        errorText,
+      );
       return NextResponse.json(
-        { ok: false, message: `Redeploy failed: ${redeployResponse.status}`, details: errorText },
-        { status: 502 }
+        {
+          ok: false,
+          message: `Redeploy failed: ${redeployResponse.status}`,
+          details: errorText,
+        },
+        { status: 502 },
       );
     }
 
     const result = await redeployResponse.json();
-    console.log("[Cron] Redeploy successfully triggered:", result.id || result.url);
+    console.log(
+      "[Cron] Redeploy successfully triggered:",
+      result.id || result.url,
+    );
 
     return NextResponse.json({
       ok: true,
-      message: "Redeploy triggered. Content sync will run as part of the new build.",
+      message:
+        "Redeploy triggered. Content sync will run as part of the new build.",
       deploymentId: result.id,
       deploymentUrl: result.url ? `https://${result.url}` : undefined,
     });
   } catch (error: any) {
-    console.error("[Cron] Fatal error during sync-content execution:", error.message, error.stack);
+    console.error(
+      "[Cron] Fatal error during sync-content execution:",
+      error.message,
+      error.stack,
+    );
     return NextResponse.json(
-      { ok: false, message: "Internal server error occurred while triggering redeploy.", error: error.message },
-      { status: 500 }
+      {
+        ok: false,
+        message: "Internal server error occurred while triggering redeploy.",
+        error: error.message,
+      },
+      { status: 500 },
     );
   }
 }
