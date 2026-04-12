@@ -20,6 +20,8 @@ const config = {
 
 if (!config.dbUrl) {
   console.error("TURSO_DATABASE_URL is not set. Sync aborted.");
+  console.log("Available environment variables (keys only):", Object.keys(process.env).filter(key => !key.includes('SECRET') && !key.includes('TOKEN') && !key.includes('KEY')));
+  console.log("Check if TURSO_DATABASE_URL exists in the list above.");
   process.exit(1);
 }
 
