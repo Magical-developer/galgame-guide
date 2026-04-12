@@ -288,3 +288,4 @@ pnpm run build
 pnpm run content:sync
 pnpm run lint
 ```
+# galgame-guide
