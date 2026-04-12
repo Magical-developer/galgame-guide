@@ -31,6 +31,12 @@ export default async function HomePage() {
     getFeaturedGames(6),
     getAllGames(),
   ]);
+
+  // Sort by updatedAt for recent list
+  const recentGames = [...allGames]
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+    .slice(0, 12);
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
@@ -65,7 +71,7 @@ export default async function HomePage() {
       <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-16 px-5 py-8 sm:px-8 lg:px-12">
         <header className="grid gap-8 rounded-[2.5rem] border border-white/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] p-7 shadow-[0_40px_120px_rgba(0,0,0,0.38)] backdrop-blur lg:grid-cols-[1.25fr_0.75fr] lg:p-10">
           <div className="space-y-7">
-            <span className="eyebrow">绅游攻略索引</span>
+            <span className="eyebrow">绅游攻略索引门户</span>
             <div className="space-y-5">
               <h1 className="max-w-4xl font-display text-5xl leading-none text-[--ink-strong] sm:text-6xl lg:text-7xl">
                 绅游推荐、Galgame 全结局达成指南。
@@ -74,7 +80,7 @@ export default async function HomePage() {
                 </span>
               </h1>
               <p className="max-w-2xl text-base leading-8 text-[--ink-soft] sm:text-lg">
-                次元绅士指南致力于为您提供深度的视觉小说（Visual Novel）与绅士游戏攻略。
+                次元绅士指南已收录 {allGames.length} 篇视觉小说与绅士游戏攻略。
                 无论您是在寻找核心角色路线的分歧点，还是需要全CG 存档的安装路径，
                 本站的结构化指南都能助您在最短时间内达成完美通关。
               </p>
@@ -82,10 +88,10 @@ export default async function HomePage() {
 
             <div className="flex flex-wrap gap-3">
               <Link
-                href="#hot-list"
+                href="/archive"
                 className="rounded-full bg-[--accent] px-6 py-3 text-sm font-semibold tracking-[0.16em] text-black transition hover:bg-[--accent-strong]"
               >
-                查阅绅士指南
+                浏览全部解析 ({allGames.length})
               </Link>
               <a
                 href={siteConfig.mainSiteUrl}
@@ -101,8 +107,8 @@ export default async function HomePage() {
           <aside className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
             {[
               ["收录作品", `${allGames.length}+`],
-              ["内容分类", "绅游推荐 / Galgame / 绅士向"],
-              ["核心指南", "结局路线 / 全CG解锁 / 存档索引"],
+              ["内容分类", "绅游推荐 / Galgame"],
+              ["核心指南", "结局路线 / 全CG解锁"],
             ].map(([label, value]) => (
               <div
                 key={label}
@@ -118,6 +124,49 @@ export default async function HomePage() {
             ))}
           </aside>
         </header>
+
+        <section id="hot-list" className="space-y-8">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="space-y-3">
+              <span className="eyebrow">热门解析</span>
+              <h2 className="font-display text-4xl text-[--ink-strong]">
+                热门绅士游戏攻略
+              </h2>
+            </div>
+            <Link 
+              href="/archive"
+              className="text-sm font-semibold tracking-[0.1em] text-[--accent] hover:underline"
+            >
+              查看全部档案 →
+            </Link>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {featuredGames.map((game, index) => (
+              <GameCard key={game.slug} game={game} priority={index < 3} />
+            ))}
+          </div>
+        </section>
+
+        <section className="space-y-8">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="space-y-3">
+              <span className="eyebrow">最新更新</span>
+              <h2 className="font-display text-4xl text-[--ink-strong]">
+                最近收录的攻略解析
+              </h2>
+            </div>
+            <p className="max-w-xl text-sm leading-7 text-white/55">
+              次元绅士指南保持每日同步更新，为您提供第一手的高质量绅游攻略。
+            </p>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+            {recentGames.map((game) => (
+              <GameCard key={game.slug} game={game} />
+            ))}
+          </div>
+        </section>
 
         <section className="grid gap-6 rounded-[2.5rem] border border-white/10 bg-black/20 p-6 sm:p-8 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="space-y-5">
@@ -163,26 +212,6 @@ export default async function HomePage() {
                   </div>
                 </div>
               </article>
-            ))}
-          </div>
-        </section>
-
-        <section id="hot-list" className="space-y-8">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div className="space-y-3">
-              <span className="eyebrow">最新推荐</span>
-              <h2 className="font-display text-4xl text-[--ink-strong]">
-                绅游与 Galgame 攻略新作
-              </h2>
-            </div>
-            <p className="max-w-xl text-sm leading-7 text-white/55">
-              以下是次元绅士指南近期收录的高质量攻略索引。点击进入详情页，开启您的完美绅士之旅。
-            </p>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {featuredGames.map((game, index) => (
-              <GameCard key={game.slug} game={game} priority={index < 3} />
             ))}
           </div>
         </section>

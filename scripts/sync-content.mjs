@@ -20,8 +20,8 @@ const config = {
     "https://service.krzacg.com/api/posts/hot-feed",
   sourceAssetBaseUrl:
     process.env.CONTENT_SOURCE_ASSET_BASE_URL ?? "https://upload.krzacg.com",
-  pageSize: Number(process.env.CONTENT_SYNC_PAGE_SIZE ?? 10),
-  maxPages: Number(process.env.CONTENT_SYNC_MAX_PAGES ?? 3),
+  pageSize: Number(process.env.CONTENT_SYNC_PAGE_SIZE ?? 20),
+  maxPages: Number(process.env.CONTENT_SYNC_MAX_PAGES ?? 5),
   aiBaseUrl: process.env.AI_BASE_URL ?? "",
   aiApiKey: process.env.AI_API_KEY ?? "",
   aiModel: process.env.AI_MODEL ?? "",
