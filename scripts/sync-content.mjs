@@ -217,17 +217,27 @@ async function fetchSourcePosts() {
     url.searchParams.set("limit", String(config.pageSize));
     url.searchParams.set("sort", "views");
 
+    console.log(`[Sync] Fetching page ${page}: ${url.toString()}`);
+
     try {
       const response = await fetch(url, {
         headers: { "User-Agent": "Mozilla/5.0 Chrome/124.0.0.0 Safari/537.36" }
       });
-      if (!response.ok) break;
+      if (!response.ok) {
+        console.error(`[Sync] API error on page ${page}: ${response.status} ${response.statusText}`);
+        break;
+      }
       const payload = await response.json();
       const batch = Array.isArray(payload?.data) ? payload.data : [];
+      console.log(`[Sync] Page ${page} returned ${batch.length} items (total in response: ${payload?.total ?? payload?.count ?? 'unknown'})`);
       if (batch.length === 0) break;
       items.push(...batch);
-    } catch { break; }
+    } catch (err) {
+      console.error(`[Sync] Failed to fetch page ${page}:`, err.message);
+      break;
+    }
   }
+  console.log(`[Sync] Total posts fetched from API: ${items.length}`);
   return items;
 }
 
@@ -285,6 +295,7 @@ async function main() {
   }
 
   console.log("[Sync] Content synchronization complete.");
+  console.log(`[Sync] Summary: ${posts.length} posts fetched, processed with upserts.`);
 }
 
 main().catch(console.error);

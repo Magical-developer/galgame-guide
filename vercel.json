@@ -1,5 +1,4 @@
 {
-  "buildCommand": "npm run content:sync && npm run build",
   "crons": [
     {
       "path": "/api/cron/sync-content",
