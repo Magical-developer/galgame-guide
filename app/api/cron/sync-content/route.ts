@@ -1,14 +1,14 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { exec } from "node:child_process";
-import { promisify } from "node:util";
 
 import { siteConfig } from "@/lib/config";
-
-const execAsync = promisify(exec);
+import { syncContent } from "@/lib/sync-content";
 
 function isAuthorized(authorization: string | null, userAgent: string | null) {
-  if (siteConfig.cronSecret && authorization === `Bearer ${siteConfig.cronSecret}`) {
+  if (
+    siteConfig.cronSecret &&
+    authorization === `Bearer ${siteConfig.cronSecret}`
+  ) {
     return true;
   }
   if (userAgent?.includes("vercel-cron")) {
@@ -17,7 +17,7 @@ function isAuthorized(authorization: string | null, userAgent: string | null) {
   return false;
 }
 
-export const maxDuration = 300; // 5 minutes max (Vercel Pro). Hobby gets 60s.
+export const maxDuration = 300; // Vercel Pro 5min, Hobby gets clamped to 60s
 
 export async function GET() {
   const requestHeaders = await headers();
@@ -31,29 +31,18 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Step 1: Run content sync at runtime (avoids build-environment IP blocks)
+  // Step 1: Run sync at runtime (direct import, no child_process.exec)
   console.log("[Cron] Starting runtime content sync...");
+  let syncResult: { totalFetched: number } | null = null;
   try {
-    const { stdout, stderr } = await execAsync("node scripts/sync-content.mjs", {
-      cwd: process.cwd(),
-      env: process.env,
-      timeout: 280_000, // 280s, leave buffer before maxDuration
-    });
-
-    console.log("[Cron] Sync stdout:\n", stdout);
-    if (stderr) console.error("[Cron] Sync stderr:\n", stderr);
-
-    // Check if sync actually fetched data
-    const totalFetched = stdout.match(/Total posts fetched from API: (\d+)/);
-    if (totalFetched) {
-      console.log(`[Cron] Sync fetched ${totalFetched[1]} posts.`);
-    }
+    syncResult = await syncContent();
+    console.log(`[Cron] Sync finished. Fetched ${syncResult.totalFetched} posts.`);
   } catch (syncError: any) {
-    console.error("[Cron] Sync script failed:", syncError.message);
+    console.error("[Cron] Sync failed:", syncError.message);
     // Don't fail here; still try to redeploy so existing pages are regenerated
   }
 
-  // Step 2: Trigger redeploy to regenerate static pages with new DB data
+  // Step 2: Trigger redeploy
   const token = process.env.VERCEL_TOKEN;
   const projectId = process.env.VERCEL_PROJECT_ID;
   const teamId = process.env.VERCEL_ORG_ID;
@@ -134,6 +123,7 @@ export async function GET() {
     return NextResponse.json({
       ok: true,
       message: "Runtime sync completed and redeploy triggered.",
+      fetched: syncResult?.totalFetched ?? 0,
       deploymentId: result.id,
     });
   } catch (error: any) {
