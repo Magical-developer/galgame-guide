@@ -79,9 +79,9 @@ export default async function GamePage({
     notFound();
   }
 
-  const markdown = guide?.markdown ?? generateFallbackContent(game);
+  const markdown = guide?.markdown || generateFallbackContent(game);
   const sections = parseGuideSections(markdown);
-  const faq = parseFaq(findSection(sections, "FAQ"));
+  const faq = parseFaq(findSection(sections, "常见问题 FAQ"));
   const relatedGames = getRelatedGames(game, allGames);
   const canonical = `${siteConfig.siteUrl}/${game.slug}`;
   const jsonLd = [
@@ -251,13 +251,13 @@ export default async function GamePage({
 
         <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
           <div className="space-y-6">
-            <ArticleSection section={findSection(sections, "游戏简介")} />
-            <ArticleSection section={findSection(sections, "推荐理由")} />
-            <ArticleSection section={findSection(sections, "攻略要点")} />
+            <ArticleSection section={findSection(sections, "游戏剧情简介")} />
+            <ArticleSection section={findSection(sections, "核心推荐理由")} />
+            <ArticleSection section={findSection(sections, "完美攻略全流程")} />
             <ArticleSection
-              section={findSection(sections, "CG解锁说明", "CG 解锁说明")}
+              section={findSection(sections, "全CG与回想场景解锁")}
             />
-            <ArticleSection section={findSection(sections, "存档说明")} />
+            <ArticleSection section={findSection(sections, "存档管理与安装说明")} />
             <section className="rounded-4xl border border-[--accent]/25 bg-[linear-gradient(180deg,rgba(252,177,93,0.12),rgba(255,255,255,0.03))] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.18)] sm:p-8">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-2">
