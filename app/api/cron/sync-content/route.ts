@@ -2,7 +2,6 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { siteConfig } from "@/lib/config";
-import { syncContent } from "@/lib/sync-content";
 
 function isAuthorized(authorization: string | null, userAgent: string | null) {
   if (
@@ -17,7 +16,7 @@ function isAuthorized(authorization: string | null, userAgent: string | null) {
   return false;
 }
 
-export const maxDuration = 300; // Vercel Pro 5min, Hobby gets clamped to 60s
+export const maxDuration = 60;
 
 export async function GET() {
   const requestHeaders = await headers();
@@ -31,18 +30,10 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Step 1: Run sync at runtime (direct import, no child_process.exec)
-  console.log("[Cron] Starting runtime content sync...");
-  let syncResult: { totalFetched: number } | null = null;
-  try {
-    syncResult = await syncContent();
-    console.log(`[Cron] Sync finished. Fetched ${syncResult.totalFetched} posts.`);
-  } catch (syncError: any) {
-    console.error("[Cron] Sync failed:", syncError.message);
-    // Don't fail here; still try to redeploy so existing pages are regenerated
-  }
+  // NOTE: Data sync has been moved to GitHub Actions because the source API
+  // blocks all Vercel IP ranges. This cron only triggers a redeploy.
+  console.log("[Cron] Data sync runs on GitHub Actions. Triggering redeploy only...");
 
-  // Step 2: Trigger redeploy
   const token = process.env.VERCEL_TOKEN;
   const projectId = process.env.VERCEL_PROJECT_ID;
   const teamId = process.env.VERCEL_ORG_ID;
@@ -122,8 +113,7 @@ export async function GET() {
 
     return NextResponse.json({
       ok: true,
-      message: "Runtime sync completed and redeploy triggered.",
-      fetched: syncResult?.totalFetched ?? 0,
+      message: "Redeploy triggered. Data sync runs on GitHub Actions.",
       deploymentId: result.id,
     });
   } catch (error: any) {
