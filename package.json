@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/sync-content.mjs && next build",
+    "build": "next build",
     "db:init": "node scripts/init-db.mjs",
     "content:sync": "node scripts/sync-content.mjs",
+    "generate:ai": "node scripts/generate-ai-guides.mjs",
     "compare:models": "node scripts/compare-models.mjs",
     "start": "next start",
     "lint": "eslint"

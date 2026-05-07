@@ -1,109 +1,105 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import { exec } from "node:child_process";
+import { promisify } from "node:util";
 
 import { siteConfig } from "@/lib/config";
 
+const execAsync = promisify(exec);
+
 function isAuthorized(authorization: string | null, userAgent: string | null) {
-  // Allow manual requests with the correct secret header
-  if (
-    siteConfig.cronSecret &&
-    authorization === `Bearer ${siteConfig.cronSecret}`
-  ) {
+  if (siteConfig.cronSecret && authorization === `Bearer ${siteConfig.cronSecret}`) {
     return true;
   }
-
-  // Vercel Cron requests have a specific user-agent
   if (userAgent?.includes("vercel-cron")) {
     return true;
   }
-
   return false;
 }
+
+export const maxDuration = 300; // 5 minutes max (Vercel Pro). Hobby gets 60s.
 
 export async function GET() {
   const requestHeaders = await headers();
   const authorization = requestHeaders.get("authorization");
   const userAgent = requestHeaders.get("user-agent");
 
-  console.log("[Cron] Incoming request:", {
-    userAgent,
-    hasAuth: !!authorization,
-  });
+  console.log("[Cron] Incoming request:", { userAgent, hasAuth: !!authorization });
 
   if (!isAuthorized(authorization, userAgent)) {
     console.error("[Cron] Unauthorized access attempt.");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Step 1: Run content sync at runtime (avoids build-environment IP blocks)
+  console.log("[Cron] Starting runtime content sync...");
+  try {
+    const { stdout, stderr } = await execAsync("node scripts/sync-content.mjs", {
+      cwd: process.cwd(),
+      env: process.env,
+      timeout: 280_000, // 280s, leave buffer before maxDuration
+    });
+
+    console.log("[Cron] Sync stdout:\n", stdout);
+    if (stderr) console.error("[Cron] Sync stderr:\n", stderr);
+
+    // Check if sync actually fetched data
+    const totalFetched = stdout.match(/Total posts fetched from API: (\d+)/);
+    if (totalFetched) {
+      console.log(`[Cron] Sync fetched ${totalFetched[1]} posts.`);
+    }
+  } catch (syncError: any) {
+    console.error("[Cron] Sync script failed:", syncError.message);
+    // Don't fail here; still try to redeploy so existing pages are regenerated
+  }
+
+  // Step 2: Trigger redeploy to regenerate static pages with new DB data
   const token = process.env.VERCEL_TOKEN;
   const projectId = process.env.VERCEL_PROJECT_ID;
   const teamId = process.env.VERCEL_ORG_ID;
 
   if (!token || !projectId) {
-    console.error(
-      "[Cron] Configuration error: VERCEL_TOKEN or VERCEL_PROJECT_ID is missing from environment variables.",
-    );
+    console.error("[Cron] Missing VERCEL_TOKEN or VERCEL_PROJECT_ID.");
     return NextResponse.json(
-      {
-        ok: false,
-        message: "Server configuration error (missing environment variables).",
-      },
-      { status: 500 },
+      { ok: false, message: "Missing redeploy config." },
+      { status: 500 }
     );
   }
 
   try {
-    console.log(
-      "[Cron] Fetching latest production deployment for project:",
-      projectId,
-    );
-
-    // Find the latest successful production deployment
+    console.log("[Cron] Fetching latest production deployment...");
     const listParams = new URLSearchParams({
       projectId,
       limit: "1",
       state: "READY",
       target: "production",
     });
-    // Only add teamId if it's actually set (Team account vs Personal account)
     if (teamId) listParams.set("teamId", teamId);
 
-    const listUrl = `https://api.vercel.com/v6/deployments?${listParams.toString()}`;
-    const listResponse = await fetch(listUrl, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const listResponse = await fetch(
+      `https://api.vercel.com/v6/deployments?${listParams.toString()}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
 
     if (!listResponse.ok) {
-      const errorText = await listResponse.text();
-      console.error(
-        "[Cron] Vercel List API failed:",
-        listResponse.status,
-        errorText,
-      );
+      const text = await listResponse.text();
+      console.error("[Cron] Vercel List API failed:", listResponse.status, text);
       return NextResponse.json(
-        {
-          ok: false,
-          message: `Vercel List API error: ${listResponse.status}`,
-          details: errorText,
-        },
-        { status: 502 },
+        { ok: false, message: `Vercel List API error: ${listResponse.status}` },
+        { status: 502 }
       );
     }
 
     const { deployments } = await listResponse.json();
     const latestId = deployments?.[0]?.uid;
-
     if (!latestId) {
-      console.warn("[Cron] No production deployment found to redeploy.");
       return NextResponse.json(
-        { ok: false, message: "No production deployments found to redeploy." },
-        { status: 404 },
+        { ok: false, message: "No production deployment found." },
+        { status: 404 }
       );
     }
 
     console.log("[Cron] Triggering redeploy for deployment ID:", latestId);
-
-    // Trigger a new deployment from the latest production build
     const redeployParams = new URLSearchParams();
     if (teamId) redeployParams.set("teamId", teamId);
 
@@ -120,52 +116,31 @@ export async function GET() {
           name: "galgame-guide",
           target: "production",
         }),
-      },
+      }
     );
 
     if (!redeployResponse.ok) {
-      const errorText = await redeployResponse.text();
-      console.error(
-        "[Cron] Vercel Redeploy API failed:",
-        redeployResponse.status,
-        errorText,
-      );
+      const text = await redeployResponse.text();
+      console.error("[Cron] Redeploy failed:", redeployResponse.status, text);
       return NextResponse.json(
-        {
-          ok: false,
-          message: `Redeploy failed: ${redeployResponse.status}`,
-          details: errorText,
-        },
-        { status: 502 },
+        { ok: false, message: `Redeploy failed: ${redeployResponse.status}` },
+        { status: 502 }
       );
     }
 
     const result = await redeployResponse.json();
-    console.log(
-      "[Cron] Redeploy successfully triggered:",
-      result.id || result.url,
-    );
+    console.log("[Cron] Redeploy triggered:", result.id || result.url);
 
     return NextResponse.json({
       ok: true,
-      message:
-        "Redeploy triggered. Content sync will run as part of the new build.",
+      message: "Runtime sync completed and redeploy triggered.",
       deploymentId: result.id,
-      deploymentUrl: result.url ? `https://${result.url}` : undefined,
     });
   } catch (error: any) {
-    console.error(
-      "[Cron] Fatal error during sync-content execution:",
-      error.message,
-      error.stack,
-    );
+    console.error("[Cron] Fatal error:", error.message);
     return NextResponse.json(
-      {
-        ok: false,
-        message: "Internal server error occurred while triggering redeploy.",
-        error: error.message,
-      },
-      { status: 500 },
+      { ok: false, message: "Internal error.", error: error.message },
+      { status: 500 }
     );
   }
 }

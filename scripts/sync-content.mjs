@@ -11,11 +11,12 @@ loadEnvConfig(projectRoot);
 const config = {
   sourceApiUrl: process.env.CONTENT_SOURCE_API_URL ?? "https://service.krzacg.com/api/posts/hot-feed",
   sourceAssetBaseUrl: process.env.CONTENT_SOURCE_ASSET_BASE_URL ?? "https://upload.krzacg.com",
-  pageSize: Number(process.env.CONTENT_SYNC_PAGE_SIZE ?? 100),
-  maxPages: Number(process.env.CONTENT_SYNC_MAX_PAGES ?? 20),
+  pageSize: Math.min(Number(process.env.CONTENT_SYNC_PAGE_SIZE ?? 50), 50),
+  maxPages: Number(process.env.CONTENT_SYNC_MAX_PAGES ?? 2),
   aiBaseUrl: process.env.AI_BASE_URL ?? "",
   aiApiKey: process.env.AI_API_KEY ?? "",
   aiModel: process.env.AI_MODEL ?? "",
+  skipAi: process.env.SKIP_AI_GUIDE_GENERATION === "true",
   dbUrl: process.env.TURSO_DATABASE_URL,
   dbToken: process.env.TURSO_AUTH_TOKEN,
 };
@@ -117,19 +118,38 @@ async function importLocalData() {
 
 const hasAiConfig = Boolean(config.aiBaseUrl && config.aiApiKey && config.aiModel);
 
-const slugify = (value) => {
+const slugify = (value, id) => {
   const latin = value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-  if (latin) return latin.slice(0, 72);
-  return `game-${crypto.createHash("sha1").update(value).digest("hex").slice(0, 10)}`;
+  const base = latin ? latin.slice(0, 50) : "game";
+  const suffix = id ? id.slice(-8) : crypto.randomUUID().slice(0, 8);
+  return `${base}-${suffix}`;
 };
 
 const cleanTitle = (value) => {
-  let clean = value.replace(/[\u3010\u3011]|\[.*?\]/g, " ").trim();
-  clean = clean.replace(/[vV](er\.?\s?)?\d+(\.\d+)*/g, " ");
-  clean = clean.replace(/(度盘|网盘|解压|大小|GB|G|MB|M|PC|安卓|中文|官中|汉化|新作|个人|新作).*$/gi, " ");
-  clean = clean.replace(/\/+/g, " ").replace(/-+/g, " ").replace(/\s+/g, " ").trim();
-  if (clean.length < 2) return value.split(" ")[0];
-  return clean;
+  let clean = value;
+
+  // 1. 删除【xxx】和[xxx]及其中内容（标签前缀/后缀）
+  clean = clean.replace(/【.*?】/g, " ").replace(/\[.*?\]/g, " ");
+
+  // 2. 删除（xxx）圆括号内容
+  clean = clean.replace(/（.*?）/g, " ");
+
+  // 3. 删除版本号 v1.0 / Ver1.02 / V2.07 / V0.3.2 beta（只匹配版本号本身，不吃后面的普通单词）
+  clean = clean.replace(/\b[vV](er\.?\s?)?\d+(\.\d+)*\s*(?:beta|alpha|rc|patch|build|fix)?\b/gi, " ");
+
+  // 4. 删除末尾资源信息（度盘、网盘、解压码、大小等）——精确匹配，不贪婪删全文
+  clean = clean.replace(/\b(度盘|网盘|解压码?|大小|密码)[\/:\s]*[^\s\[【]*/gi, " ");
+  clean = clean.replace(/\b\d+(\.\d+)?\s*(GB|G|MB|M)\b/gi, " ");
+
+  // 5. 清理多余符号和空格
+  clean = clean.replace(/[\/\|]+/g, " ").replace(/-+/g, " ").replace(/\s+/g, " ").trim();
+
+  // 6. 如果洗完后太短或空了，回退到去掉标签后的原始文本
+  if (clean.length < 3) {
+    clean = value.replace(/【.*?】/g, " ").replace(/\[.*?\]/g, " ").replace(/（.*?）/g, " ").trim();
+  }
+
+  return clean || value;
 };
 
 const buildFallbackContent = (game) => `## 游戏剧情简介
@@ -177,6 +197,10 @@ const buildPrompt = (game) => `
 `;
 
 async function requestAiMarkdown(game) {
+  if (config.skipAi) {
+    console.log(`[Sync] SKIP_AI_GUIDE_GENERATION=true, using fallback for "${game.title}"`);
+    return buildFallbackContent(game);
+  }
   if (!hasAiConfig) return buildFallbackContent(game);
 
   const endpoint = new URL("/v1/chat/completions", config.aiBaseUrl).toString();
@@ -251,6 +275,12 @@ async function main() {
   await initDatabase();
   await importLocalData();
 
+  if (config.skipAi) {
+    console.log("[Sync] ⚡ Running in FAST MODE (SKIP_AI_GUIDE_GENERATION=true). AI will not be called.");
+  } else {
+    console.log("[Sync] 🤖 Running in FULL MODE. AI generation enabled.");
+  }
+
   console.log("[Sync] Fetching posts from source API...");
   const posts = await fetchSourcePosts();
   console.log(`[Sync] Found ${posts.length} posts.`);
@@ -258,7 +288,7 @@ async function main() {
   for (const post of posts) {
     const tags = Array.isArray(post.tags) ? post.tags.map((t) => t.name).filter(Boolean) : [];
     const cleanedTitle = cleanTitle(post.title);
-    const slug = slugify(post.title);
+    const slug = slugify(post.title, post._id);
     const sourceHash = crypto.createHash("sha1").update([post._id, post.updated_at].join("|")).digest("hex");
 
     const existing = await db.execute({
