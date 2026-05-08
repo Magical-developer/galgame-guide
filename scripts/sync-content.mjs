@@ -10,31 +10,20 @@ loadEnvConfig(projectRoot);
 
 const config = {
   sourceApiUrl: process.env.CONTENT_SOURCE_API_URL ?? "https://service.krzacg.com/api/posts/hot-feed",
-  sourceAssetBaseUrl: process.env.CONTENT_SOURCE_ASSET_BASE_URL ?? "https://upload.krzacg.com",
   pageSize: Math.min(Number(process.env.CONTENT_SYNC_PAGE_SIZE ?? 50), 50),
   maxPages: Number(process.env.CONTENT_SYNC_MAX_PAGES ?? 2),
-  aiBaseUrl: process.env.AI_BASE_URL ?? "",
-  aiApiKey: process.env.AI_API_KEY ?? "",
-  aiModel: process.env.AI_MODEL ?? "",
-  skipAi: process.env.SKIP_AI_GUIDE_GENERATION === "true",
   dbUrl: process.env.TURSO_DATABASE_URL,
   dbToken: process.env.TURSO_AUTH_TOKEN,
 };
 
 if (!config.dbUrl) {
-  console.error("TURSO_DATABASE_URL is not set. Sync aborted.");
-  console.log("Available environment variables (keys only):", Object.keys(process.env).filter(key => !key.includes('SECRET') && !key.includes('TOKEN') && !key.includes('KEY')));
-  console.log("Check if TURSO_DATABASE_URL exists in the list above.");
+  console.error("[Sync] TURSO_DATABASE_URL is not set. Sync aborted.");
   process.exit(1);
 }
 
-const db = createClient({
-  url: config.dbUrl,
-  authToken: config.dbToken,
-});
+const db = createClient({ url: config.dbUrl, authToken: config.dbToken });
 
 async function initDatabase() {
-  console.log("[Sync] Ensuring database tables exist...");
   await db.execute(`
     CREATE TABLE IF NOT EXISTS games (
       id TEXT PRIMARY KEY,
@@ -73,50 +62,31 @@ async function importLocalData() {
     const data = await fs.readFile(gamesPath, "utf8");
     const games = JSON.parse(data);
     console.log(`[Sync] Found ${games.length} local games in JSON. Checking for import...`);
-
     for (const game of games) {
-      const existing = await db.execute({
-        sql: "SELECT 1 FROM games WHERE slug = ? LIMIT 1",
-        args: [game.slug],
-      });
-
+      const existing = await db.execute({ sql: "SELECT 1 FROM games WHERE slug = ? LIMIT 1", args: [game.slug] });
       if (existing.rows.length > 0) continue;
-
       console.log(`[Sync] Importing local game: ${game.title}`);
-      
       let markdown = "";
       try {
         const contentPath = path.join(projectRoot, "data", "generated", "content", `${game.slug}.json`);
         const contentData = await fs.readFile(contentPath, "utf8");
         markdown = JSON.parse(contentData).markdown || "";
-      } catch (e) {
-        markdown = buildFallbackContent({ title: game.title, tags: game.tags });
-      }
-
+      } catch { /* no-op */ }
       await db.execute({
         sql: `INSERT INTO games (id, slug, title, summary, cover, tags, download, download_label, views, source_id, source_hash, updated_at)
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-        args: [
-          crypto.randomUUID(), game.slug, game.title, game.summary, game.cover, 
-          JSON.stringify(game.tags), game.download, game.downloadLabel, 
-          game.views, game.sourceId, game.sourceHash
-        ],
+        args: [crypto.randomUUID(), game.slug, game.title, game.summary, game.cover,
+          JSON.stringify(game.tags), game.download, game.downloadLabel, game.views, game.sourceId, game.sourceHash],
       });
-
       if (markdown) {
         await db.execute({
-          sql: `INSERT INTO guides (slug, markdown, provider, model, generated_at)
-                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+          sql: `INSERT INTO guides (slug, markdown, provider, model, generated_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
           args: [game.slug, markdown, "local-import", "original"],
         });
       }
     }
-  } catch (err) {
-    console.log("[Sync] No local JSON data found or failed to read. Skipping import.");
-  }
+  } catch { /* no-op */ }
 }
-
-const hasAiConfig = Boolean(config.aiBaseUrl && config.aiApiKey && config.aiModel);
 
 const slugify = (value, id) => {
   let base = value
@@ -131,111 +101,17 @@ const slugify = (value, id) => {
 
 const cleanTitle = (value) => {
   let clean = value;
-
-  // 1. 删除【xxx】和[xxx]及其中内容（标签前缀/后缀）
   clean = clean.replace(/【.*?】/g, " ").replace(/\[.*?\]/g, " ");
-
-  // 2. 删除（xxx）圆括号内容
   clean = clean.replace(/（.*?）/g, " ");
-
-  // 3. 删除版本号 v1.0 / Ver1.02 / V2.07 / V0.3.2 beta（只匹配版本号本身，不吃后面的普通单词）
   clean = clean.replace(/\b[vV](er\.?\s?)?\d+(\.\d+)*\s*(?:beta|alpha|rc|patch|build|fix)?\b/gi, " ");
-
-  // 4. 删除末尾资源信息（度盘、网盘、解压码、大小等）——精确匹配，不贪婪删全文
   clean = clean.replace(/\b(度盘|网盘|解压码?|大小|密码)[\/:\s]*[^\s\[【]*/gi, " ");
   clean = clean.replace(/\b\d+(\.\d+)?\s*(GB|G|MB|M)\b/gi, " ");
-
-  // 5. 清理多余符号和空格
   clean = clean.replace(/[\/\|]+/g, " ").replace(/-+/g, " ").replace(/\s+/g, " ").trim();
-
-  // 6. 如果洗完后太短或空了，回退到去掉标签后的原始文本
   if (clean.length < 3) {
     clean = value.replace(/【.*?】/g, " ").replace(/\[.*?\]/g, " ").replace(/（.*?）/g, " ").trim();
   }
-
   return clean || value;
 };
-
-const buildFallbackContent = (game) => `## 游戏剧情简介
-${game.title} 是一款深度融合了 ${game.tags.join("、")} 元素的精品作。本作以其独特的叙事风格和精美的原画设计，在视觉小说领域获得了极高的关注度。
-
-## 核心推荐理由
-如果你偏好 ${game.tags.slice(0, 2).join("、")} 题材，那么本作绝对是不容错过的佳作。
-
-## 完美攻略全流程
-建议在进入分歧点前保留独立存档。优先推进主线剧情，确认核心女主角的情感倾向。
-
-## 全CG与回想场景解锁
-本作的全CG 解锁主要依赖于全结局的达成。建议玩家在完成一周目后，利用快进功能回收剩余的分支场景。
-
-## 常见问题 FAQ
-### 如何快速达成真结局？
-建议参考本站整理的完美路线图，确保所有前置事件均已正确触发。
-
-## 类似题材作品推荐
-如果你喜欢本作的画风，可以继续探索同类带有 ${game.tags.slice(0, 2).join("、")} 标签的作品。`;
-
-const buildPrompt = (game) => `
-你是一名资深视觉小说（Visual Novel）与绅士游戏攻略索引编辑，你所在的项目叫"次元绅士指南"，你的职责是根据提供的游戏基础信息，输出一篇专业、硬核且对搜索引擎优化（SEO）友好的中文攻略指南。
-
-【游戏基础信息】
-标题：${game.title}
-标签：${game.tags.join("、")}
-原始简介：${game.summary}
-
-【内容要求】
-1. **风格定位**：文字要专业、懂行。禁止出现"开发者自白"、"项目说明"或"由于是部署在Vercel..."等废话。
-2. **详细程度**：全文控制在 800-1200 字之间。
-3. **SEO 关键词**：绅游推荐、Galgame攻略教程、绅士游戏全CG存档、汉化补丁下载说明、完美全结局路线、真结局达成条件、回想内容解锁、存档路径说明、分歧选项。
-4. **合规提示**：使用"回想场景"、"特殊事件"、"动态CG"、"解锁特定路线"等行业术语，严禁露骨淫秽词语。
-5. **格式规范**：只能输出 Markdown 格式的正文内容。
-
-【必须包含的二级标题】
-## 游戏剧情简介
-## 核心推荐理由
-## 完美攻略全流程
-## 全CG与回想场景解锁
-## 存档管理与安装说明
-## 常见问题 FAQ
-## 类似题材作品推荐
-`;
-
-async function requestAiMarkdown(game) {
-  if (config.skipAi) {
-    console.log(`[Sync] SKIP_AI_GUIDE_GENERATION=true, using fallback for "${game.title}"`);
-    return buildFallbackContent(game);
-  }
-  if (!hasAiConfig) return buildFallbackContent(game);
-
-  const endpoint = new URL("/v1/chat/completions", config.aiBaseUrl).toString();
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${config.aiApiKey}`,
-    },
-    body: JSON.stringify({
-      model: config.aiModel,
-      temperature: 0.7,
-      messages: [
-        {
-          role: "system",
-          content: "你是一名资深 Galgame 攻略编辑。你编写的内容是技术性的游戏指南，侧重于系统逻辑、路线分歧、存档路径和全CG收集，严禁使用过于露骨的淫秽词语。",
-        },
-        {
-          role: "user",
-          content: buildPrompt(game),
-        },
-      ],
-    }),
-  });
-
-  if (!response.ok) return buildFallbackContent(game);
-
-  const payload = await response.json();
-  const content = payload?.choices?.[0]?.message?.content?.trim();
-  return content || buildFallbackContent(game);
-}
 
 async function fetchSourcePosts() {
   const items = [];
@@ -244,9 +120,7 @@ async function fetchSourcePosts() {
     url.searchParams.set("page", String(page));
     url.searchParams.set("limit", String(config.pageSize));
     url.searchParams.set("sort", "views");
-
     console.log(`[Sync] Fetching page ${page}: ${url.toString()}`);
-
     try {
       const response = await fetch(url, {
         headers: {
@@ -258,12 +132,12 @@ async function fetchSourcePosts() {
         }
       });
       if (!response.ok) {
-        console.error(`[Sync] API error on page ${page}: ${response.status} ${response.statusText}`);
+        console.error(`[Sync] API error on page ${page}: ${response.status}`);
         break;
       }
       const payload = await response.json();
       const batch = Array.isArray(payload?.data) ? payload.data : [];
-      console.log(`[Sync] Page ${page} returned ${batch.length} items (total in response: ${payload?.total ?? payload?.count ?? 'unknown'})`);
+      console.log(`[Sync] Page ${page} returned ${batch.length} items (total: ${payload?.total ?? "unknown"})`);
       if (batch.length === 0) break;
       items.push(...batch);
     } catch (err) {
@@ -279,15 +153,13 @@ async function main() {
   await initDatabase();
   await importLocalData();
 
-  if (config.skipAi) {
-    console.log("[Sync] ⚡ Running in FAST MODE (SKIP_AI_GUIDE_GENERATION=true). AI will not be called.");
-  } else {
-    console.log("[Sync] 🤖 Running in FULL MODE. AI generation enabled.");
-  }
-
   console.log("[Sync] Fetching posts from source API...");
   const posts = await fetchSourcePosts();
   console.log(`[Sync] Found ${posts.length} posts.`);
+
+  let created = 0;
+  let updated = 0;
+  let skipped = 0;
 
   for (const post of posts) {
     const tags = Array.isArray(post.tags) ? post.tags.map((t) => t.name).filter(Boolean) : [];
@@ -301,25 +173,17 @@ async function main() {
     });
 
     if (existing.rows[0]?.source_hash === sourceHash) {
-      console.log(`[Sync] Skipping "${post.title}" (already up to date)`);
+      skipped++;
       continue;
     }
 
-    console.log(`[Sync] Processing "${post.title}"...`);
-
-    // Prefer main site content; fallback to AI only if empty
-    const mainContent = post.content?.trim() || "";
-    let markdown = mainContent;
-    let provider = "main-site";
-    let model = "original";
-
-    if (!markdown) {
-      console.log(`[Sync]   ↳ No main-site content, falling back to AI/template...`);
-      markdown = await requestAiMarkdown({ title: cleanedTitle, tags, summary: post.title });
-      provider = config.aiBaseUrl;
-      model = config.aiModel;
+    const isNew = existing.rows.length === 0;
+    if (isNew) {
+      console.log(`[Sync] + NEW  "${cleanedTitle}"`);
+      created++;
     } else {
-      console.log(`[Sync]   ↳ Using main-site content (${markdown.length} chars)`);
+      console.log(`[Sync] ~ UPD  "${cleanedTitle}"`);
+      updated++;
     }
 
     await db.execute({
@@ -330,23 +194,25 @@ async function main() {
               tags=excluded.tags, download=excluded.download, views=excluded.views,
               source_hash=excluded.source_hash, updated_at=CURRENT_TIMESTAMP`,
       args: [
-        crypto.randomUUID(), slug, cleanedTitle,
-        post.title, post.cover, JSON.stringify(tags), post.resources?.[0]?.url || "",
-        post.resources?.[0]?.platform || "资源链接", post.views || 0, post._id, sourceHash
+        crypto.randomUUID(), slug, cleanedTitle, post.title, post.cover,
+        JSON.stringify(tags), post.resources?.[0]?.url || "",
+        post.resources?.[0]?.platform || "资源链接", post.views || 0, post._id, sourceHash,
       ],
     });
 
-    await db.execute({
-      sql: `INSERT INTO guides (slug, markdown, provider, model, generated_at)
-            VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
-            ON CONFLICT(slug) DO UPDATE SET
-              markdown=excluded.markdown, provider=excluded.provider, model=excluded.model, generated_at=CURRENT_TIMESTAMP`,
-      args: [slug, markdown, provider, model],
-    });
+    // Only create an empty guide placeholder for NEW games.
+    // Existing games keep their current guide (AI or otherwise).
+    if (isNew) {
+      await db.execute({
+        sql: `INSERT INTO guides (slug, markdown, provider, model, generated_at)
+              VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+              ON CONFLICT(slug) DO NOTHING`,
+        args: [slug, "", "pending", ""],
+      });
+    }
   }
 
-  console.log("[Sync] Content synchronization complete.");
-  console.log(`[Sync] Summary: ${posts.length} posts fetched, processed with upserts.`);
+  console.log(`\n[Sync] Done. Created: ${created} | Updated: ${updated} | Skipped: ${skipped}`);
 }
 
 main().catch(console.error);

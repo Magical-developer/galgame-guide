@@ -2,14 +2,13 @@ name: Daily Content Sync
 
 on:
   schedule:
-    # UTC 19:00 = 北京时间 03:00
     - cron: "0 19 * * *"
   workflow_dispatch:
 
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
@@ -29,15 +28,25 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Sync content from main site
+      - name: Sync metadata from main site
         run: node scripts/sync-content.mjs
         env:
           TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
           CONTENT_SOURCE_API_URL: ${{ secrets.CONTENT_SOURCE_API_URL }}
-          SKIP_AI_GUIDE_GENERATION: "true"
           CONTENT_SYNC_PAGE_SIZE: "50"
           CONTENT_SYNC_MAX_PAGES: "2"
+
+      - name: Generate AI guides for all pending articles
+        run: node scripts/generate-ai-guides.mjs
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          AI_BASE_URL: ${{ secrets.AI_BASE_URL }}
+          AI_API_KEY: ${{ secrets.AI_API_KEY }}
+          AI_MODEL: ${{ secrets.AI_MODEL }}
+          AI_BATCH_SIZE: "50"
+          AI_DELAY_MS: "500"
 
       - name: Trigger Vercel redeploy
         run: |
