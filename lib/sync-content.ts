@@ -9,6 +9,7 @@ interface SyncOptions {
 function getConfig() {
   return {
     sourceApiUrl: process.env.CONTENT_SOURCE_API_URL ?? "https://service.krzacg.com/api/posts/hot-feed",
+    categorySlugs: process.env.CONTENT_SYNC_CATEGORY_SLUGS ?? "hentai,game",
     pageSize: Math.min(Number(process.env.CONTENT_SYNC_PAGE_SIZE ?? 50), 50),
     maxPages: Number(process.env.CONTENT_SYNC_MAX_PAGES ?? 2),
     dbUrl: process.env.TURSO_DATABASE_URL!,
@@ -91,6 +92,9 @@ export async function fetchSourcePosts(options?: { pageSize?: number; maxPages?:
     url.searchParams.set("page", String(page));
     url.searchParams.set("limit", String(pageSize));
     url.searchParams.set("sort", "views");
+    if (cfg.categorySlugs) {
+      url.searchParams.set("category_slugs", cfg.categorySlugs);
+    }
 
     console.log(`[Sync] Fetching page ${page}: ${url.toString()}`);
 
@@ -109,7 +113,14 @@ export async function fetchSourcePosts(options?: { pageSize?: number; maxPages?:
         break;
       }
       const payload = await response.json();
-      const batch = Array.isArray((payload as any)?.data) ? (payload as any).data : [];
+      let batch = Array.isArray((payload as any)?.data) ? (payload as any).data : [];
+      if (cfg.categorySlugs) {
+        const allowed = cfg.categorySlugs.split(",").map((s) => s.trim());
+        batch = batch.filter((post: any) => {
+          const cats = Array.isArray(post.categories) ? post.categories : [];
+          return cats.some((c: any) => allowed.includes(c.slug));
+        });
+      }
       console.log(`[Sync] Page ${page} returned ${batch.length} items (total: ${(payload as any)?.total ?? "unknown"})`);
       if (batch.length === 0) break;
       items.push(...batch);

@@ -10,6 +10,7 @@ loadEnvConfig(projectRoot);
 
 const config = {
   sourceApiUrl: process.env.CONTENT_SOURCE_API_URL ?? "https://service.krzacg.com/api/posts/hot-feed",
+  categorySlugs: process.env.CONTENT_SYNC_CATEGORY_SLUGS ?? "hentai,game",
   pageSize: Math.min(Number(process.env.CONTENT_SYNC_PAGE_SIZE ?? 50), 50),
   maxPages: Number(process.env.CONTENT_SYNC_MAX_PAGES ?? 2),
   dbUrl: process.env.TURSO_DATABASE_URL,
@@ -120,6 +121,9 @@ async function fetchSourcePosts() {
     url.searchParams.set("page", String(page));
     url.searchParams.set("limit", String(config.pageSize));
     url.searchParams.set("sort", "views");
+    if (config.categorySlugs) {
+      url.searchParams.set("category_slugs", config.categorySlugs);
+    }
     console.log(`[Sync] Fetching page ${page}: ${url.toString()}`);
     try {
       const response = await fetch(url, {
@@ -136,7 +140,15 @@ async function fetchSourcePosts() {
         break;
       }
       const payload = await response.json();
-      const batch = Array.isArray(payload?.data) ? payload.data : [];
+      let batch = Array.isArray(payload?.data) ? payload.data : [];
+      // Local filter: only keep posts that belong to hentai or game categories
+      if (config.categorySlugs) {
+        const allowed = config.categorySlugs.split(",").map(s => s.trim());
+        batch = batch.filter(post => {
+          const cats = Array.isArray(post.categories) ? post.categories : [];
+          return cats.some(c => allowed.includes(c.slug));
+        });
+      }
       console.log(`[Sync] Page ${page} returned ${batch.length} items (total: ${payload?.total ?? "unknown"})`);
       if (batch.length === 0) break;
       items.push(...batch);
