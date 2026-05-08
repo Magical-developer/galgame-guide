@@ -86,8 +86,9 @@ export default async function GamePage({
   }
 
   const markdown = guide?.markdown || generateFallbackContent(game);
-  const sections = parseGuideSections(markdown);
-  const faq = parseFaq(findSection(sections, "常见问题 FAQ"));
+  const isHtmlContent = markdown.trim().startsWith("<") && markdown.includes("</");
+  const sections = isHtmlContent ? [] : parseGuideSections(markdown);
+  const faq = isHtmlContent ? [] : parseFaq(findSection(sections, "常见问题 FAQ"));
   const relatedGames = getRelatedGames(game, allGames);
   const canonical = `${siteConfig.siteUrl}/${game.slug}`;
   const jsonLd = [
@@ -273,13 +274,26 @@ export default async function GamePage({
 
         <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
           <div className="space-y-6">
-            <ArticleSection section={findSection(sections, "游戏剧情简介")} />
-            <ArticleSection section={findSection(sections, "核心推荐理由")} />
-            <ArticleSection section={findSection(sections, "完美攻略全流程")} />
-            <ArticleSection
-              section={findSection(sections, "全CG与回想场景解锁")}
-            />
-            <ArticleSection section={findSection(sections, "存档管理与安装说明")} />
+            {isHtmlContent ? (
+              <article
+                className="space-y-5 rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 shadow-[0_25px_70px_rgba(0,0,0,0.22)] backdrop-blur sm:p-8"
+              >
+                <div
+                  className="prose prose-invert max-w-none text-[15px] leading-8 text-[--ink-soft] sm:text-base"
+                  dangerouslySetInnerHTML={{ __html: markdown }}
+                />
+              </article>
+            ) : (
+              <>
+                <ArticleSection section={findSection(sections, "游戏剧情简介")} />
+                <ArticleSection section={findSection(sections, "核心推荐理由")} />
+                <ArticleSection section={findSection(sections, "完美攻略全流程")} />
+                <ArticleSection
+                  section={findSection(sections, "全CG与回想场景解锁")}
+                />
+                <ArticleSection section={findSection(sections, "存档管理与安装说明")} />
+              </>
+            )}
             <section className="rounded-4xl border border-[--accent]/25 bg-[linear-gradient(180deg,rgba(252,177,93,0.12),rgba(255,255,255,0.03))] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.18)] sm:p-8">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-2">

@@ -301,23 +301,37 @@ async function main() {
     });
 
     if (existing.rows[0]?.source_hash === sourceHash) {
-      console.log(`[Sync] Skipping "${cleanedTitle}" (already up to date)`);
+      console.log(`[Sync] Skipping "${post.title}" (already up to date)`);
       continue;
     }
 
-    console.log(`[Sync] Processing "${cleanedTitle}"...`);
-    const markdown = await requestAiMarkdown({ title: cleanedTitle, tags, summary: post.title });
+    console.log(`[Sync] Processing "${post.title}"...`);
+
+    // Prefer main site content; fallback to AI only if empty
+    const mainContent = post.content?.trim() || "";
+    let markdown = mainContent;
+    let provider = "main-site";
+    let model = "original";
+
+    if (!markdown) {
+      console.log(`[Sync]   ↳ No main-site content, falling back to AI/template...`);
+      markdown = await requestAiMarkdown({ title: cleanedTitle, tags, summary: post.title });
+      provider = config.aiBaseUrl;
+      model = config.aiModel;
+    } else {
+      console.log(`[Sync]   ↳ Using main-site content (${markdown.length} chars)`);
+    }
 
     await db.execute({
       sql: `INSERT INTO games (id, slug, title, summary, cover, tags, download, download_label, views, source_id, source_hash, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            ON CONFLICT(slug) DO UPDATE SET 
-              title=excluded.title, summary=excluded.summary, cover=excluded.cover, 
-              tags=excluded.tags, download=excluded.download, views=excluded.views, 
+            ON CONFLICT(slug) DO UPDATE SET
+              title=excluded.title, summary=excluded.summary, cover=excluded.cover,
+              tags=excluded.tags, download=excluded.download, views=excluded.views,
               source_hash=excluded.source_hash, updated_at=CURRENT_TIMESTAMP`,
       args: [
-        crypto.randomUUID(), slug, `${cleanedTitle} 攻略解析 | 全结局路线 | 全CG回想解锁`, 
-        post.title, post.cover, JSON.stringify(tags), post.resources?.[0]?.url || "", 
+        crypto.randomUUID(), slug, cleanedTitle,
+        post.title, post.cover, JSON.stringify(tags), post.resources?.[0]?.url || "",
         post.resources?.[0]?.platform || "资源链接", post.views || 0, post._id, sourceHash
       ],
     });
@@ -325,9 +339,9 @@ async function main() {
     await db.execute({
       sql: `INSERT INTO guides (slug, markdown, provider, model, generated_at)
             VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
-            ON CONFLICT(slug) DO UPDATE SET 
-              markdown=excluded.markdown, generated_at=CURRENT_TIMESTAMP`,
-      args: [slug, markdown, config.aiBaseUrl, config.aiModel],
+            ON CONFLICT(slug) DO UPDATE SET
+              markdown=excluded.markdown, provider=excluded.provider, model=excluded.model, generated_at=CURRENT_TIMESTAMP`,
+      args: [slug, markdown, provider, model],
     });
   }
 

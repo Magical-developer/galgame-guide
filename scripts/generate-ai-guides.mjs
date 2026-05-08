@@ -165,7 +165,9 @@ async function main() {
     const game = { title, summary, tags };
     const globalIndex = totalPending - pending.length + i + 1;
 
-    console.log(`[AI] [${globalIndex}/${totalPending}] ${title}`);
+    // 日志显示原始标题（summary = 主站原始标题），方便辨认
+    const displayTitle = summary || title || "未知";
+    console.log(`[AI] [${globalIndex}/${totalPending}] ${displayTitle}`);
 
     let markdown = null;
     try {
