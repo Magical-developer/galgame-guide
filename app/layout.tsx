@@ -44,6 +44,11 @@ export const metadata: Metadata = {
     locale: "zh_CN",
     url: "/",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: siteConfig.name,
+    description: siteConfig.description,
+  },
   verification: {
     google: "1Xgn-if-N3BE_rT0R4tVMRVNQH8ouKq1y7suby_9vjM",
     yandex: "ca96ec0d870b3e63",

@@ -119,9 +119,13 @@ async function importLocalData() {
 const hasAiConfig = Boolean(config.aiBaseUrl && config.aiApiKey && config.aiModel);
 
 const slugify = (value, id) => {
-  const latin = value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-  const base = latin ? latin.slice(0, 50) : "game";
-  const suffix = id ? id.slice(-8) : crypto.randomUUID().slice(0, 8);
+  let base = value
+    .replace(/[【】\[\]（）(){}<>"'`~!@#$%^&*+=,;:?\\|/\s]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .replace(/-+/g, "-");
+  if (base.length > 60) base = base.slice(0, 60);
+  if (!base) base = "game";
+  const suffix = id ? id.slice(-6) : crypto.randomUUID().slice(0, 6);
   return `${base}-${suffix}`;
 };
 

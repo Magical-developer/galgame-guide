@@ -14,6 +14,7 @@ import {
   buildGameDescription,
   buildGameKeywords,
   buildGameTitle,
+  buildTwitterMeta,
 } from "@/lib/seo";
 import { generateFallbackContent } from "@/lib/content/generate-content";
 
@@ -60,6 +61,11 @@ export async function generateMetadata({
         },
       ],
     },
+    twitter: buildTwitterMeta({
+      title,
+      description,
+      image: game.cover,
+    }),
   };
 }
 
@@ -106,12 +112,28 @@ export default async function GamePage({
     {
       "@context": "https://schema.org",
       "@type": "Article",
-      headline: buildGameTitle(game),
+      headline: game.title,
       description: buildGameDescription(game),
       image: [game.cover],
-      dateModified: game.updatedAt,
-      datePublished: game.createdAt,
-      mainEntityOfPage: canonical,
+      dateModified: game.updatedAt || new Date().toISOString(),
+      datePublished: game.createdAt || game.updatedAt || new Date().toISOString(),
+      mainEntityOfPage: {
+        "@type": "WebPage",
+        "@id": canonical,
+      },
+      author: {
+        "@type": "Organization",
+        name: "次元绅士指南",
+        url: siteConfig.siteUrl,
+      },
+      publisher: {
+        "@type": "Organization",
+        name: "次元绅士指南",
+        logo: {
+          "@type": "ImageObject",
+          url: `${siteConfig.siteUrl}/logo.png`,
+        },
+      },
       about: [
         game.title,
         ...game.tags,

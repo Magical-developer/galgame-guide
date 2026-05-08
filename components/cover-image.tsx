@@ -22,16 +22,6 @@ export function CoverImage({
 
   return (
     <>
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,#161d2b_0%,#0d1118_100%)]">
-        <Image
-          src="/placeholder-cover.svg"
-          alt=""
-          fill
-          sizes={sizes}
-          className="object-cover opacity-95"
-        />
-      </div>
-
       {!hasError ? (
         <Image
           src={src}
@@ -40,11 +30,18 @@ export function CoverImage({
           priority={priority}
           sizes={sizes}
           className={className}
+          loading={priority ? "eager" : "lazy"}
           onError={() => {
             setHasError(true);
           }}
         />
-      ) : null}
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center bg-[linear-gradient(180deg,#161d2b_0%,#0d1118_100%)]">
+          <span className="text-xs uppercase tracking-widest text-white/30">
+            封面加载失败
+          </span>
+        </div>
+      )}
     </>
   );
 }

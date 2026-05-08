@@ -60,9 +60,18 @@ export async function initDatabase(db = createDb()) {
 }
 
 export const slugify = (value: string, id?: string) => {
-  const latin = value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-  const base = latin ? latin.slice(0, 50) : "game";
-  const suffix = id ? id.slice(-8) : crypto.randomUUID().slice(0, 8);
+  // Keep CJK characters and alphanumeric, replace special chars/symbols with dash
+  let base = value
+    .replace(/[【】\[\]（）(){}<>"'`~!@#$%^&*+=,;:?\\|/\s]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .replace(/-+/g, "-");
+
+  // Limit to reasonable length (URL friendly)
+  if (base.length > 60) base = base.slice(0, 60);
+  if (!base) base = "game";
+
+  // Append unique suffix from _id to guarantee uniqueness
+  const suffix = id ? id.slice(-6) : crypto.randomUUID().slice(0, 6);
   return `${base}-${suffix}`;
 };
 
