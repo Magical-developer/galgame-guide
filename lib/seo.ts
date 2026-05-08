@@ -19,8 +19,9 @@ export const buildGameTitle = (game: GameRecord) =>
   `${game.title} 攻略｜全结局达成路线｜回想场景解锁条件`;
 
 export const buildGameDescription = (game: GameRecord) => {
-  const tagStr = game.tags.slice(0, 3).join(" / ");
-  return `${game.title} 深度攻略，涵盖 ${tagStr} 核心玩法、全结局分歧选项、回想场景触发条件与存档位置说明。次元绅士指南为您整理最完整的 FAQ 与类似作品推荐。`;
+  const base = game.summary || game.title;
+  const unique = base.length > 120 ? base.slice(0, 120) + "..." : base;
+  return `${unique} — 深度攻略，涵盖 ${game.tags.slice(0, 3).join(" / ")} 核心玩法、全结局分歧选项、回想场景触发条件与存档位置说明。`;
 };
 
 export const buildGameKeywords = (game: GameRecord) => [
