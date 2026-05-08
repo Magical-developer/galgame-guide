@@ -9,7 +9,7 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
@@ -29,7 +29,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Sync content from main site
+      - name: Sync content from main site (metadata only)
         run: node scripts/sync-content.mjs
         env:
           TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
@@ -38,6 +38,17 @@ jobs:
           SKIP_AI_GUIDE_GENERATION: "true"
           CONTENT_SYNC_PAGE_SIZE: "50"
           CONTENT_SYNC_MAX_PAGES: "2"
+
+      - name: Generate AI guides for top articles
+        run: node scripts/generate-ai-guides.mjs
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          AI_BASE_URL: ${{ secrets.AI_BASE_URL }}
+          AI_API_KEY: ${{ secrets.AI_API_KEY }}
+          AI_MODEL: ${{ secrets.AI_MODEL }}
+          AI_BATCH_SIZE: "15"
+          AI_DELAY_MS: "1000"
 
       - name: Trigger Vercel redeploy
         run: |
