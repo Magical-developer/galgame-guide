@@ -6,7 +6,7 @@ import { ArticleSection } from "@/components/article-section";
 import { CoverImage } from "@/components/cover-image";
 import { RelatedGames } from "@/components/related-games";
 import { siteConfig } from "@/lib/config";
-import { getAllGames, getGameBySlug, getGuideBySlug } from "@/lib/games";
+import { getAllGames, getGameBySlug, getGuideBySlug, getRecentSlugs } from "@/lib/games";
 import { findSection, parseFaq, parseGuideSections } from "@/lib/markdown";
 import { getRelatedGames } from "@/lib/related-games";
 import {
@@ -18,11 +18,12 @@ import {
 } from "@/lib/seo";
 import { generateFallbackContent } from "@/lib/content/generate-content";
 
-export const dynamicParams = false;
+export const dynamicParams = true;
+export const revalidate = 86400;
 
 export async function generateStaticParams() {
-  const games = await getAllGames();
-  return games.map((game) => ({ slug: game.slug }));
+  const slugs = await getRecentSlugs(200);
+  return slugs.map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({

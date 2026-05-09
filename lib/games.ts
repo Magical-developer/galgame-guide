@@ -23,6 +23,30 @@ export const getAllGames = cache(async (): Promise<GameRecord[]> => {
   return result.rows.map(mapRowToGame);
 });
 
+export const getRecentSlugs = cache(async (limit = 200): Promise<string[]> => {
+  const result = await db.execute({
+    sql: "SELECT slug FROM games ORDER BY published_at DESC LIMIT ?",
+    args: [limit],
+  });
+  return result.rows.map((row) => row.slug as string);
+});
+
+export const getGamesPaginated = cache(
+  async (page = 1, pageSize = 48): Promise<GameRecord[]> => {
+    const offset = (page - 1) * pageSize;
+    const result = await db.execute({
+      sql: "SELECT * FROM games ORDER BY published_at DESC LIMIT ? OFFSET ?",
+      args: [pageSize, offset],
+    });
+    return result.rows.map(mapRowToGame);
+  }
+);
+
+export const getGamesCount = cache(async (): Promise<number> => {
+  const result = await db.execute("SELECT COUNT(*) as count FROM games");
+  return Number((result.rows[0] as any).count || 0);
+});
+
 export const getFeaturedGames = cache(async (limit = 9): Promise<GameRecord[]> => {
   const result = await db.execute({
     sql: "SELECT * FROM games ORDER BY views DESC LIMIT ?",
