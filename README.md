@@ -12,7 +12,7 @@
 
 内容流水线负责：
 
-- 从 `https://service.krzacg.com/api/posts/hot-feed` 抓取源数据
+- 从 `` 抓取源数据
 - 规范化为站内游戏数据结构
 - 调用 AI 服务生成 markdown 攻略
 - 将结果写入 `data/generated/`
@@ -123,11 +123,11 @@ artifacts/model-compare/<timestamp>/
 | `NEXT_PUBLIC_SITE_URL` | 否 | 站点公开域名，默认 `http://localhost:3000` |
 | `NEXT_PUBLIC_MAIN_SITE_URL` | 否 | 主站入口链接 |
 | `MAIN_SITE_GAME_URL_TEMPLATE` | 否 | 下载 CTA 跳转到主站的模板，支持 `{slug}` / `{sourceId}` / `{title}` |
-| `CONTENT_SOURCE_API_URL` | 否 | 源内容接口，默认 `https://service.krzacg.com/api/posts/hot-feed` |
-| `CONTENT_SOURCE_ASSET_BASE_URL` | 否 | 图片前缀，默认 `https://upload.krzacg.com` |
+| `CONTENT_SOURCE_API_URL` | 否 | 源内容接口，默认 `` |
+| `CONTENT_SOURCE_ASSET_BASE_URL` | 否 | 图片前缀，默认 `` |
 | `CONTENT_SYNC_PAGE_SIZE` | 否 | 每页抓取条数，默认 `10` |
 | `CONTENT_SYNC_MAX_PAGES` | 否 | 每次同步抓取页数，默认 `3` |
-| `AI_BASE_URL` | 否 | AI 节点，例如 `https://yunwu.ai` |
+| `AI_BASE_URL` | 否 | AI 节点，例如 `` |
 | `AI_API_KEY` | 否 | AI Token |
 | `AI_MODEL` | 否 | 使用模型名 |
 | `CRON_SECRET` | 否 | 保护 `/api/cron/sync-content` 的密钥 |
