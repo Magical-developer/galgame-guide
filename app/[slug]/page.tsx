@@ -241,7 +241,7 @@ export default async function GamePage({
             <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
               <a
                 href={`/go/${game.slug}`}
-                className="group rounded-[2rem] border border-[--accent]/40 bg-[linear-gradient(135deg,rgba(252,177,93,0.95),rgba(255,209,102,0.92))] px-6 py-5 text-black shadow-[0_20px_60px_rgba(252,177,93,0.28)] transition hover:-translate-y-0.5 hover:shadow-[0_28px_80px_rgba(252,177,93,0.34)]"
+                className="exoclick-popunder-trigger group rounded-[2rem] border border-[--accent]/40 bg-[linear-gradient(135deg,rgba(252,177,93,0.95),rgba(255,209,102,0.92))] px-6 py-5 text-black shadow-[0_20px_60px_rgba(252,177,93,0.28)] transition hover:-translate-y-0.5 hover:shadow-[0_28px_80px_rgba(252,177,93,0.34)]"
               >
                 <div className="flex items-center justify-between gap-4">
                   <div className="space-y-1.5">
@@ -297,7 +297,7 @@ export default async function GamePage({
                 </div>
                 <a
                   href={`/go/${game.slug}`}
-                  className="inline-flex items-center justify-center rounded-full bg-[--accent] px-7 py-3.5 text-sm font-semibold tracking-[0.16em] text-black transition hover:bg-[--accent-strong]"
+                  className="exoclick-popunder-trigger inline-flex items-center justify-center rounded-full bg-[--accent] px-7 py-3.5 text-sm font-semibold tracking-[0.16em] text-black transition hover:bg-[--accent-strong]"
                 >
                   去主站继续
                 </a>

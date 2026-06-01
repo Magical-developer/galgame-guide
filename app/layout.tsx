@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import "@/app/globals.css";
+import { ExoClickHandler } from "@/components/exoclick-handler";
 import { siteConfig } from "@/lib/config";
 
 export const metadata: Metadata = {
@@ -108,6 +109,7 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body className="flex min-h-screen flex-col">
+        <ExoClickHandler />
         {children}
         <Footer />
       </body>
