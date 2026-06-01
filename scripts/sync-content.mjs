@@ -12,6 +12,7 @@ const config = {
   sourceApiUrl: process.env.CONTENT_SOURCE_API_URL ?? "https://service.krzacg.com/api/posts/hot-feed",
   categorySlugs: process.env.CONTENT_SYNC_CATEGORY_SLUGS ?? "hentai,game",
   excludeKeywords: (process.env.CONTENT_SYNC_EXCLUDE_KEYWORDS ?? "mmd,vam,virt-a-mate").toLowerCase().split(",").map(s => s.trim()).filter(Boolean),
+  imageCdnBase: process.env.CONTENT_SYNC_IMAGE_CDN ?? "https://upload-cdn.b-cdn.net",
   pageSize: Math.min(Number(process.env.CONTENT_SYNC_PAGE_SIZE ?? 50), 50),
   maxPages: Number(process.env.CONTENT_SYNC_MAX_PAGES ?? 2),
   dbUrl: process.env.TURSO_DATABASE_URL,
@@ -222,6 +223,13 @@ async function main() {
 
     const summaryText = stripHtml(post.content) || post.title || "";
 
+    // Resolve cover URL: relative paths → CDN base, absolute URLs pass through
+    let coverUrl = post.cover || "";
+    if (coverUrl && !coverUrl.startsWith("http")) {
+      const base = config.imageCdnBase.replace(/\/$/, "");
+      coverUrl = base + (coverUrl.startsWith("/") ? coverUrl : "/" + coverUrl);
+    }
+
     await db.execute({
       sql: `INSERT INTO games (id, slug, title, summary, cover, tags, download, download_label, views, source_id, source_hash, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
@@ -230,7 +238,7 @@ async function main() {
               tags=excluded.tags, download=excluded.download, views=excluded.views,
               source_hash=excluded.source_hash, updated_at=CURRENT_TIMESTAMP`,
       args: [
-        crypto.randomUUID(), slug, cleanedTitle, summaryText, post.cover,
+        crypto.randomUUID(), slug, cleanedTitle, summaryText, coverUrl,
         JSON.stringify(tags), post.resources?.[0]?.url || "",
         post.resources?.[0]?.platform || "资源链接", post.views || 0, post._id, sourceHash,
       ],
