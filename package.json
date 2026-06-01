@@ -8,6 +8,7 @@
     "db:init": "node scripts/init-db.mjs",
     "content:sync": "node scripts/sync-content.mjs",
     "generate:ai": "node scripts/generate-ai-guides.mjs",
+    "generate:fallback": "node scripts/batch-fallback-guides.mjs",
     "compare:models": "node scripts/compare-models.mjs",
     "start": "next start",
     "lint": "eslint"

@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import "@/app/globals.css";
 import { ExoClickHandler } from "@/components/exoclick-handler";
+import { Navbar } from "@/components/navbar";
 import { siteConfig } from "@/lib/config";
 
 export const metadata: Metadata = {
@@ -83,6 +84,7 @@ function Footer() {
             <ul className="grid gap-2 text-sm text-[--ink-soft]">
               <li><Link href="/about" className="hover:text-[--accent]">关于我们</Link></li>
               <li><Link href="/privacy" className="hover:text-[--accent]">隐私政策</Link></li>
+              <li><Link href="/terms" className="hover:text-[--accent]">服务条款</Link></li>
               <li><Link href="/contact" className="hover:text-[--accent]">免责声明</Link></li>
             </ul>
           </div>
@@ -110,6 +112,7 @@ export default function RootLayout({
     <html lang="zh-CN">
       <body className="flex min-h-screen flex-col">
         <ExoClickHandler />
+        <Navbar />
         {children}
         <Footer />
       </body>
