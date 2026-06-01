@@ -11,6 +11,7 @@ loadEnvConfig(projectRoot);
 const config = {
   sourceApiUrl: process.env.CONTENT_SOURCE_API_URL ?? "https://service.krzacg.com/api/posts/hot-feed",
   categorySlugs: process.env.CONTENT_SYNC_CATEGORY_SLUGS ?? "hentai,game",
+  excludeKeywords: (process.env.CONTENT_SYNC_EXCLUDE_KEYWORDS ?? "mmd,vam,virt-a-mate").toLowerCase().split(",").map(s => s.trim()).filter(Boolean),
   pageSize: Math.min(Number(process.env.CONTENT_SYNC_PAGE_SIZE ?? 50), 50),
   maxPages: Number(process.env.CONTENT_SYNC_MAX_PAGES ?? 2),
   dbUrl: process.env.TURSO_DATABASE_URL,
@@ -100,6 +101,19 @@ const slugify = (value, id) => {
   return `${base}-${suffix}`;
 };
 
+const stripHtml = (html) => {
+  if (!html) return "";
+  return html
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/\s+/g, " ")
+    .trim();
+};
+
 const cleanTitle = (value) => {
   let clean = value;
   clean = clean.replace(/【.*?】/g, " ").replace(/\[.*?\]/g, " ");
@@ -147,6 +161,14 @@ async function fetchSourcePosts() {
         batch = batch.filter(post => {
           const cats = Array.isArray(post.categories) ? post.categories : [];
           return cats.some(c => allowed.includes(c.slug));
+        });
+      }
+
+      // Exclude non-galgame content by title keywords (e.g. MMD, VAM)
+      if (config.excludeKeywords.length > 0) {
+        batch = batch.filter(post => {
+          const lowerTitle = (post.title || "").toLowerCase();
+          return !config.excludeKeywords.some(kw => lowerTitle.includes(kw));
         });
       }
       console.log(`[Sync] Page ${page} returned ${batch.length} items (total: ${payload?.total ?? "unknown"})`);
@@ -198,6 +220,8 @@ async function main() {
       updated++;
     }
 
+    const summaryText = stripHtml(post.content) || post.title || "";
+
     await db.execute({
       sql: `INSERT INTO games (id, slug, title, summary, cover, tags, download, download_label, views, source_id, source_hash, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
@@ -206,7 +230,7 @@ async function main() {
               tags=excluded.tags, download=excluded.download, views=excluded.views,
               source_hash=excluded.source_hash, updated_at=CURRENT_TIMESTAMP`,
       args: [
-        crypto.randomUUID(), slug, cleanedTitle, post.title, post.cover,
+        crypto.randomUUID(), slug, cleanedTitle, summaryText, post.cover,
         JSON.stringify(tags), post.resources?.[0]?.url || "",
         post.resources?.[0]?.platform || "资源链接", post.views || 0, post._id, sourceHash,
       ],
