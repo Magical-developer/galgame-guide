@@ -37,24 +37,12 @@ jobs:
           CONTENT_SYNC_PAGE_SIZE: "50"
           CONTENT_SYNC_MAX_PAGES: "2"
 
-      - name: Generate AI guides for all pending articles
-        run: node scripts/generate-ai-guides.mjs
+      - name: Generate fallback guides for all pending articles
+        run: node scripts/batch-fallback-guides.mjs
         env:
           TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
-          AI_BASE_URL: ${{ secrets.AI_BASE_URL }}
-          AI_API_KEY: ${{ secrets.AI_API_KEY }}
-          AI_MODEL: ${{ secrets.AI_MODEL }}
-          AI_BATCH_SIZE: "50"
-          AI_DELAY_MS: "500"
 
-      - name: Trigger Vercel redeploy
+      - name: Trigger Vercel redeploy via Deploy Hook
         run: |
-          curl -s -X POST "https://api.vercel.com/v13/deployments" \
-            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -d "{
-              \"deploymentId\": \"${{ secrets.VERCEL_DEPLOYMENT_ID }}\",
-              \"name\": \"galgame-guide\",
-              \"target\": \"production\"
-            }"
+          curl -s -X POST "${{ secrets.VERCEL_DEPLOY_HOOK_URL }}" -o /dev/null -w "%{http_code}"
