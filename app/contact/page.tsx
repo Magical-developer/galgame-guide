@@ -35,7 +35,7 @@ export default function ContactPage() {
             <h2 className="text-2xl font-bold text-[--ink-strong]">联系我们</h2>
             <p>如果您有任何建议、内容纠错或版权投诉，请通过以下方式与我们取得联系：</p>
             <ul className="list-disc space-y-2 pl-5">
-              <li><strong>投诉/合作</strong>：<a href="mailto:contact@galgame-guide.vercel.app" className="text-[--accent] hover:underline">contact@galgame-guide.vercel.app</a></li>
+              <li><strong>投诉/合作</strong>：<a href="mailto:dmca@krzacg.com" className="text-[--accent] hover:underline">dmca@krzacg.com</a></li>
               <li><strong>内容反馈</strong>：请在相关攻略页面的主站入口进行反馈。</li>
             </ul>
           </div>
