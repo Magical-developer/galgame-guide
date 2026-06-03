@@ -7,41 +7,41 @@ export function EmergencyBanner() {
   if (dismissed) return null;
 
   return (
-    <div className="relative z-[100] border-b border-white/10 bg-[--accent] px-4 py-3 text-center">
-      <div className="mx-auto flex max-w-7xl flex-col items-center gap-2 sm:flex-row sm:justify-center sm:gap-6">
-        <p className="text-sm font-extrabold tracking-wide text-black">
-          🚨 【官方防失联与防限速通知】
-        </p>
+    <div className="fixed inset-x-0 top-0 z-[100]">
+      <div className="border-b-2 border-black bg-white px-4 py-3 text-center shadow-lg sm:py-4">
+        <div className="mx-auto flex max-w-7xl flex-col items-center gap-2 sm:flex-row sm:justify-center sm:gap-6">
+          <p className="text-sm font-black tracking-wider text-black sm:text-base">
+            🚨 官方防失联通知
+          </p>
 
-        <div className="flex flex-wrap items-center justify-center gap-3">
-          <a
-            href="https://www.krzacg.com/"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-black px-3 py-1.5 text-sm font-bold text-[--accent] shadow-lg transition hover:bg-white hover:text-black"
-          >
-            🌟 krzacg.com 🌟
-          </a>
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+            <a
+              href="https://www.krzacg.com/"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-4 py-2 text-sm font-black text-white shadow transition hover:bg-red-700 sm:text-base"
+            >
+              🌟 主站 krzacg.com
+            </a>
 
-          <a
-            href="https://t.me/krzacgk"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-[#229ED9] px-3 py-1.5 text-sm font-bold text-white shadow-lg transition hover:bg-[#1a8bc2]"
+            <a
+              href="https://t.me/krzacgk"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-black text-white shadow transition hover:bg-blue-700 sm:text-base"
+            >
+              ✈️ TG 频道
+            </a>
+          </div>
+
+          <button
+            onClick={() => setDismissed(true)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-2 text-xl font-bold text-black/50 transition hover:bg-black/10 hover:text-black sm:right-4"
+            aria-label="关闭"
           >
-            ✈️ 点击加入 TG
-          </a>
+            ✕
+          </button>
         </div>
-
-        <button
-          onClick={() => setDismissed(true)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-black/60 transition hover:bg-black/10 hover:text-black"
-          aria-label="关闭"
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M2 2L14 14M2 14L14 2" stroke="currentColor" strokeWidth="2" />
-          </svg>
-        </button>
       </div>
     </div>
   );
