@@ -93,6 +93,7 @@ async function importLocalData() {
 
 const slugify = (value, id) => {
   let base = value
+    .replace(/[^\x00-\x7F]+/g, "-")           // strip all non-ASCII (CJK, Japanese, etc.)
     .replace(/[【】\[\]（）(){}<>"'`~!@#$%^&*+=,;:?\\|/\s]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .replace(/-+/g, "-");

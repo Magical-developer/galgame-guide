@@ -18,7 +18,7 @@ import {
 } from "@/lib/seo";
 import { generateFallbackContent } from "@/lib/content/generate-content";
 
-export const dynamicParams = false;
+export const dynamicParams = true;
 
 export async function generateStaticParams() {
   const slugs = await getAllSlugs();
