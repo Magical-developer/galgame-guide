@@ -52,6 +52,17 @@ export const getRecentSlugs = cache(async (limit = 200): Promise<string[]> => {
   );
 });
 
+export const getAllSlugs = cache(async (): Promise<string[]> => {
+  return safeQuery(
+    async () => {
+      const result = await db.execute("SELECT slug FROM games ORDER BY published_at DESC");
+      return result.rows.map((row) => row.slug as string);
+    },
+    [],
+    "getAllSlugs"
+  );
+});
+
 export const getGamesPaginated = cache(
   async (page = 1, pageSize = 48): Promise<GameRecord[]> => {
     return safeQuery(
