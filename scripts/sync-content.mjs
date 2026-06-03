@@ -420,12 +420,8 @@ async function main() {
   await initDatabase();
   await importLocalData();
 
-  // Step 1: migrate any old Unicode slugs to ASCII-safe
-  console.log("\n========== Step 1: Migrate old slugs ==========");
-  await migrateOldSlugs();
-
-  // Step 2: sync new posts from main site
-  console.log("\n========== Step 2: Sync from API ==========");
+  // Step 1: sync new posts from main site
+  console.log("\n========== Step 1: Sync from API ==========");
   const posts = await fetchSourcePosts();
   console.log(`[Sync] Found ${posts.length} posts from API.`);
 
