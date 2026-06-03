@@ -7,34 +7,35 @@ export function EmergencyBanner() {
   if (dismissed) return null;
 
   return (
-    <div className="fixed inset-x-0 top-0 z-[100] border-b-2 border-[--accent] bg-black px-3 py-2.5 text-center shadow-[0_4px_30px_rgba(252,177,93,0.35)] sm:py-3">
-      <div className="mx-auto flex max-w-7xl items-center justify-center gap-2 sm:gap-4">
-        <span className="hidden text-lg sm:inline">🔔</span>
+    <div className="relative z-[100] border-b border-white/10 bg-[--accent] px-4 py-3 text-center">
+      <div className="mx-auto flex max-w-7xl flex-col items-center gap-2 sm:flex-row sm:justify-center sm:gap-6">
+        <p className="text-sm font-extrabold tracking-wide text-black">
+          🚨 【官方防失联与防限速通知】
+        </p>
 
-        <p className="text-xs font-bold leading-snug tracking-wide text-white sm:text-sm sm:font-extrabold">
-          【防失联】请立即收藏主站{" "}
+        <div className="flex flex-wrap items-center justify-center gap-3">
           <a
             href="https://www.krzacg.com/"
             target="_blank"
             rel="noreferrer"
-            className="inline-block rounded bg-[--accent] px-2 py-0.5 text-black transition hover:bg-[--accent-strong]"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-black px-3 py-1.5 text-sm font-bold text-[--accent] shadow-lg transition hover:bg-white hover:text-black"
           >
-            www.krzacg.com
+            🌟 krzacg.com 🌟
           </a>
-          {" "}· 关注 TG{" "}
+
           <a
             href="https://t.me/krzacgk"
             target="_blank"
             rel="noreferrer"
-            className="inline-block rounded bg-[#229ED9] px-2 py-0.5 text-white transition hover:bg-[#1a8bc2]"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#229ED9] px-3 py-1.5 text-sm font-bold text-white shadow-lg transition hover:bg-[#1a8bc2]"
           >
-            @krzacgk
+            ✈️ 点击加入 TG
           </a>
-        </p>
+        </div>
 
         <button
           onClick={() => setDismissed(true)}
-          className="ml-1 shrink-0 rounded-full p-1 text-white/60 transition hover:bg-white/10 hover:text-white"
+          className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-black/60 transition hover:bg-black/10 hover:text-black"
           aria-label="关闭"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
