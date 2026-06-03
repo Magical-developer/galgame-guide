@@ -6,7 +6,7 @@ import { ArticleSection } from "@/components/article-section";
 import { CoverImage } from "@/components/cover-image";
 import { RelatedGames } from "@/components/related-games";
 import { siteConfig } from "@/lib/config";
-import { getAllGames, getGameBySlug, getGuideBySlug, getAllSlugs } from "@/lib/games";
+import { getAllGames, getGameBySlug, getGuideBySlug, getRecentSlugs } from "@/lib/games";
 import { findSection, parseFaq, parseGuideSections } from "@/lib/markdown";
 import { getRelatedGames } from "@/lib/related-games";
 import {
@@ -19,9 +19,10 @@ import {
 import { generateFallbackContent } from "@/lib/content/generate-content";
 
 export const dynamicParams = true;
+export const revalidate = 86400;
 
 export async function generateStaticParams() {
-  const slugs = await getAllSlugs();
+  const slugs = await getRecentSlugs(500);
   return slugs.map((slug) => ({ slug }));
 }
 
