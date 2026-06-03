@@ -111,7 +111,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN">
-      <body className="flex min-h-screen flex-col">
+      <body className="flex min-h-screen flex-col pt-11 sm:pt-12">
         <ExoClickHandler />
         <EmergencyBanner />
         <Navbar />
