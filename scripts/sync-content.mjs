@@ -216,8 +216,29 @@ async function migrateOldSlugs() {
     }
 
     try {
+      // 1. Read existing guide (if any) so we don't lose content
+      const guideRes = await db.execute({
+        sql: "SELECT markdown, provider, model, generated_at FROM guides WHERE slug = ?",
+        args: [oldSlug],
+      });
+      const guideRow = guideRes.rows[0];
+
+      // 2. Delete old guide first (removes FK reference)
+      if (guideRow) {
+        await db.execute({ sql: "DELETE FROM guides WHERE slug = ?", args: [oldSlug] });
+      }
+
+      // 3. Update games slug (no dangling FK now)
       await db.execute({ sql: "UPDATE games SET slug = ? WHERE slug = ?", args: [finalSlug, oldSlug] });
-      await db.execute({ sql: "UPDATE guides SET slug = ? WHERE slug = ?", args: [finalSlug, oldSlug] });
+
+      // 4. Re-insert guide with new slug
+      if (guideRow) {
+        await db.execute({
+          sql: "INSERT INTO guides (slug, markdown, provider, model, generated_at) VALUES (?, ?, ?, ?, ?)",
+          args: [finalSlug, guideRow.markdown, guideRow.provider, guideRow.model, guideRow.generated_at],
+        });
+      }
+
       migrated++;
       if (migrated <= 5 || migrated % 100 === 0) {
         console.log(`[Migrate] "${oldSlug.slice(0, 50)}..." → "${finalSlug}"`);
