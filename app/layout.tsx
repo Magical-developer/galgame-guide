@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import "@/app/globals.css";
+import { EmergencyBanner } from "@/components/emergency-banner";
 import { ExoClickHandler } from "@/components/exoclick-handler";
 import { Navbar } from "@/components/navbar";
 import { siteConfig } from "@/lib/config";
@@ -112,6 +113,7 @@ export default function RootLayout({
     <html lang="zh-CN">
       <body className="flex min-h-screen flex-col">
         <ExoClickHandler />
+        <EmergencyBanner />
         <Navbar />
         {children}
         <Footer />
