@@ -19,11 +19,20 @@ import {
 import { generateFallbackContent } from "@/lib/content/generate-content";
 
 export const dynamicParams = true;
-export const revalidate = 86400;
+// export const revalidate = 86400; // disabled for debugging
 
 export async function generateStaticParams() {
-  const slugs = await getRecentSlugs(200);
-  return slugs.map((slug) => ({ slug }));
+  try {
+    const slugs = await getRecentSlugs(200);
+    console.log(`[build] generateStaticParams: ${slugs.length} slugs`);
+    if (slugs.length === 0) {
+      console.error("[build] WARNING: getRecentSlugs returned empty array!");
+    }
+    return slugs.map((slug) => ({ slug }));
+  } catch (err) {
+    console.error("[build] generateStaticParams failed:", (err as Error).message);
+    return [];
+  }
 }
 
 export async function generateMetadata({
@@ -76,6 +85,7 @@ export default async function GamePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  console.log(`[render] slug=${slug}`);
   const [game, allGames, guide] = await Promise.all([
     getGameBySlug(slug),
     getAllGames(),
@@ -83,6 +93,7 @@ export default async function GamePage({
   ]);
 
   if (!game) {
+    console.error(`[render] Game not found: slug=${slug}`);
     notFound();
   }
 
