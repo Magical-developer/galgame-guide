@@ -23,6 +23,13 @@ yarn-error.log*
 # Generated data
 data/generated/
 
+# Generated redirects (contains slugified titles; built on-demand)
+lib/generated-redirects.ts
+
+# Audit/build logs (may contain slug/title lists)
+audit-report.json
+build.log
+
 # Vercel
 .vercel
 

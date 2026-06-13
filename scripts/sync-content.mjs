@@ -100,6 +100,41 @@ async function initDatabase() {
       FOREIGN KEY (slug) REFERENCES games(slug) ON DELETE CASCADE
     )
   `);
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS slug_redirects (
+      old_slug TEXT PRIMARY KEY,
+      new_slug TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  await db.execute(`CREATE INDEX IF NOT EXISTS idx_slug_redirects_new ON slug_redirects(new_slug)`);
+}
+
+async function recordSlugRedirect(oldSlug, newSlug) {
+  if (!oldSlug || !newSlug || oldSlug === newSlug) return;
+  try {
+    await db.execute({
+      sql: `INSERT INTO slug_redirects (old_slug, new_slug) VALUES (?, ?)
+            ON CONFLICT(old_slug) DO UPDATE SET new_slug = excluded.new_slug`,
+      args: [oldSlug, newSlug],
+    });
+  } catch (err) {
+    console.error(`[Sync] Failed to record redirect ${oldSlug} -> ${newSlug}:`, err.message);
+  }
+}
+
+async function uniqueSlug(baseSlug) {
+  let candidate = baseSlug;
+  let suffix = 1;
+  while (true) {
+    const existing = await db.execute({
+      sql: "SELECT 1 FROM games WHERE slug = ? LIMIT 1",
+      args: [candidate],
+    });
+    if (existing.rows.length === 0) return candidate;
+    suffix += 1;
+    candidate = `${baseSlug}-${suffix}`;
+  }
 }
 
 // ─── Import legacy local JSON (one-time) ───────────────────────────────────
@@ -190,66 +225,6 @@ async function fetchSourcePosts() {
   }
   console.log(`[Sync] Total posts fetched from API: ${items.length}`);
   return items;
-}
-
-// ─── Auto-migrate old Unicode slugs to ASCII ───────────────────────────────
-
-async function migrateOldSlugs() {
-  const rows = await db.execute("SELECT slug FROM games ORDER BY slug");
-  let migrated = 0;
-  let skipped = 0;
-
-  for (const row of rows.rows) {
-    const oldSlug = row.slug;
-    const newSlug = slugify(oldSlug, oldSlug); // re-process through ASCII-only slugify
-
-    if (newSlug === oldSlug) { skipped++; continue; }
-
-    // Ensure uniqueness
-    let finalSlug = newSlug;
-    let collision = await db.execute({ sql: "SELECT 1 FROM games WHERE slug = ? LIMIT 1", args: [finalSlug] });
-    let suffix = 1;
-    while (collision.rows.length > 0 && finalSlug !== oldSlug) {
-      finalSlug = `${newSlug}-${suffix}`;
-      suffix++;
-      collision = await db.execute({ sql: "SELECT 1 FROM games WHERE slug = ? LIMIT 1", args: [finalSlug] });
-    }
-
-    try {
-      // 1. Read existing guide (if any) so we don't lose content
-      const guideRes = await db.execute({
-        sql: "SELECT markdown, provider, model, generated_at FROM guides WHERE slug = ?",
-        args: [oldSlug],
-      });
-      const guideRow = guideRes.rows[0];
-
-      // 2. Delete old guide first (removes FK reference)
-      if (guideRow) {
-        await db.execute({ sql: "DELETE FROM guides WHERE slug = ?", args: [oldSlug] });
-      }
-
-      // 3. Update games slug (no dangling FK now)
-      await db.execute({ sql: "UPDATE games SET slug = ? WHERE slug = ?", args: [finalSlug, oldSlug] });
-
-      // 4. Re-insert guide with new slug
-      if (guideRow) {
-        await db.execute({
-          sql: "INSERT INTO guides (slug, markdown, provider, model, generated_at) VALUES (?, ?, ?, ?, ?)",
-          args: [finalSlug, guideRow.markdown, guideRow.provider, guideRow.model, guideRow.generated_at],
-        });
-      }
-
-      migrated++;
-      if (migrated <= 5 || migrated % 100 === 0) {
-        console.log(`[Migrate] "${oldSlug.slice(0, 50)}..." → "${finalSlug}"`);
-      }
-    } catch (err) {
-      console.error(`[Migrate] FAILED "${oldSlug}": ${err.message}`);
-    }
-  }
-
-  console.log(`[Migrate] Done. Migrated: ${migrated} | Skipped: ${skipped}`);
-  return migrated;
 }
 
 // ─── Fallback guide generator ──────────────────────────────────────────────
@@ -432,13 +407,44 @@ async function main() {
     const slug = slugify(post.title, post._id);
     const sourceHash = crypto.createHash("sha1").update([post._id, post.updated_at].join("|")).digest("hex");
 
-    const existing = await db.execute({ sql: "SELECT source_hash FROM games WHERE slug = ?", args: [slug] });
-    if (existing.rows[0]?.source_hash === sourceHash) { skipped++; continue; }
+    const existingBySource = await db.execute({
+      sql: "SELECT slug, source_hash FROM games WHERE source_id = ? LIMIT 1",
+      args: [post._id],
+    });
 
-    const isNew = existing.rows.length === 0;
-    isNew ? created++ : updated++;
-    if (isNew) console.log(`[Sync] + NEW  "${cleanedTitle}"`);
-    else console.log(`[Sync] ~ UPD  "${cleanedTitle}"`);
+    let finalSlug = slug;
+    const existingRow = existingBySource.rows[0];
+
+    if (existingRow) {
+      // Existing game with this source_id.
+      if (existingRow.source_hash === sourceHash) {
+        skipped++;
+        continue;
+      }
+
+      finalSlug = existingRow.slug === slug ? slug : await uniqueSlug(slug);
+
+      if (existingRow.slug !== finalSlug) {
+        await recordSlugRedirect(existingRow.slug, finalSlug);
+        // If a guide already exists under the old slug, move it to the new slug.
+        try {
+          await db.execute({
+            sql: "UPDATE guides SET slug = ? WHERE slug = ?",
+            args: [finalSlug, existingRow.slug],
+          });
+        } catch {
+          // Guide may already exist under new slug; ignore.
+        }
+      }
+
+      updated++;
+      console.log(`[Sync] ~ UPD  "${cleanedTitle}"`);
+    } else {
+      // Brand new game.
+      finalSlug = await uniqueSlug(slug);
+      created++;
+      console.log(`[Sync] + NEW  "${cleanedTitle}"`);
+    }
 
     const summaryText = stripHtml(post.content) || post.title || "";
     let coverUrl = post.cover || "";
@@ -453,18 +459,18 @@ async function main() {
             ON CONFLICT(slug) DO UPDATE SET
               title=excluded.title, summary=excluded.summary, cover=excluded.cover,
               tags=excluded.tags, download=excluded.download, views=excluded.views,
-              source_hash=excluded.source_hash, updated_at=CURRENT_TIMESTAMP`,
+              source_id=excluded.source_id, source_hash=excluded.source_hash, updated_at=CURRENT_TIMESTAMP`,
       args: [
-        crypto.randomUUID(), slug, cleanedTitle, summaryText, coverUrl,
+        crypto.randomUUID(), finalSlug, cleanedTitle, summaryText, coverUrl,
         JSON.stringify(tags), post.resources?.[0]?.url || "",
         post.resources?.[0]?.platform || "资源链接", post.views || 0, post._id, sourceHash,
       ],
     });
 
-    if (isNew) {
+    if (!existingRow) {
       await db.execute({
         sql: `INSERT INTO guides (slug, markdown, provider, model, generated_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP) ON CONFLICT(slug) DO NOTHING`,
-        args: [slug, "", "pending", ""],
+        args: [finalSlug, "", "pending", ""],
       });
     }
   }

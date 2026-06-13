@@ -4,10 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/build-redirects.mjs && next build",
+    "build:redirects": "node scripts/build-redirects.mjs",
     "db:init": "node scripts/init-db.mjs",
     "content:sync": "node scripts/sync-content.mjs",
     "generate:ai": "node scripts/generate-ai-guides.mjs",
+    "audit:pages": "node scripts/audit-pages.mjs",
+    "delete:pages": "node scripts/delete-pages.mjs",
+    "refill:guides": "node scripts/refill-fallback-guides.mjs",
 
     "compare:models": "node scripts/compare-models.mjs",
     "start": "next start",

@@ -61,6 +61,17 @@ async function main() {
     )
   `);
 
+  // Create slug redirects table
+  console.log("[DB] Creating 'slug_redirects' table...");
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS slug_redirects (
+      old_slug TEXT PRIMARY KEY,
+      new_slug TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  await db.execute(`CREATE INDEX IF NOT EXISTS idx_slug_redirects_new ON slug_redirects(new_slug)`);
+
   console.log("[DB] Database initialization complete.");
 }
 
