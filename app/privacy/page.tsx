@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "隐私政策 | 次元绅士指南",
-  description: "了解次元绅士指南的隐私政策。我们尊重用户的隐私，并说明我们收集哪些信息、如何保护用户数据。",
+  description: "了解次元绅士指南如何收集、使用与保护您的访问数据。本站不强制用户注册，仅使用标准服务器日志与匿名分析工具优化浏览体验，并严格遵循最小必要原则处理用户信息。",
 };
 
 export default function PrivacyPage() {

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "关于我们 | 次元绅士指南",
-  description: "了解次元绅士指南的宗旨。我们致力于为视觉小说爱好者提供高质量的绅游推荐、全结局攻略及游戏系统解析。",
+  description: "了解次元绅士指南的创立宗旨与团队理念。我们专注于为视觉小说与绅士游戏玩家提供高质量的全结局攻略、角色路线解析与回想场景解锁指南。努力成为您通关每一部 Galgame 的可靠助手。",
 };
 
 export default function AboutPage() {

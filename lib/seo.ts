@@ -1,7 +1,5 @@
 import type { GameRecord } from "@/lib/types/game";
 
-import { siteConfig } from "@/lib/config";
-
 const sharedKeywords = [
   "次元绅士指南",
   "绅游推荐",
@@ -19,9 +17,20 @@ export const buildGameTitle = (game: GameRecord) =>
   `${game.title} 攻略｜全结局达成路线｜回想场景解锁条件`;
 
 export const buildGameDescription = (game: GameRecord) => {
-  const base = game.summary || game.title;
-  const unique = base.length > 120 ? base.slice(0, 120) + "..." : base;
-  return `${unique} — 深度攻略，涵盖 ${game.tags.slice(0, 3).join(" / ")} 核心玩法、全结局分歧选项、回想场景触发条件与存档位置说明。`;
+  const tags = game.tags.slice(0, 4).join("、") || "视觉小说";
+  const shortTags = game.tags.slice(0, 3).join(" / ") || "Galgame";
+
+  let unique: string;
+  if (game.summary && game.summary.length >= 80) {
+    unique = game.summary.length > 100 ? game.summary.slice(0, 100) + "..." : game.summary;
+  } else {
+    unique = `${game.title} 是一款融合 ${tags} 元素的视觉小说作品。${game.summary || ""}`.trim();
+    if (unique.length > 100) {
+      unique = unique.slice(0, 100) + "...";
+    }
+  }
+
+  return `${unique} — 深度攻略，涵盖 ${shortTags} 核心玩法、全结局分歧选项、回想场景触发条件与存档位置说明。`;
 };
 
 export const buildGameKeywords = (game: GameRecord) => [
@@ -40,7 +49,7 @@ export const buildHomeTitle = () =>
   `次元绅士指南｜绅游推荐与 Galgame 全结局攻略索引`;
 
 export const buildHomeDescription = () =>
-  "次元绅士指南：专注于绅游推荐、Galgame 全结局攻略及全图存档指南。为您拆解复杂的选项分歧，助您快速解锁回想，体验最极致的游戏内容。";
+  "次元绅士指南是专业的绅游推荐与 Galgame 攻略索引门户，提供视觉小说全结局路线、回想场景解锁条件、全 CG 存档位置与汉化版安装说明，助您高效达成真结局与完美收集。";
 
 export const buildHomeKeywords = () => [
   ...sharedKeywords,

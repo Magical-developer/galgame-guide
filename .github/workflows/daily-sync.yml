@@ -1,8 +1,11 @@
 name: Daily Content Sync
 
+# 定时触发已禁用：源 API 会 403 GitHub Actions 的 IP。
+# 同步任务改为本地手动执行 `pnpm content:sync`。
+# 如需恢复定时，取消下面 schedule 的注释即可。
 on:
-  schedule:
-    - cron: "0 19 * * *"
+  # schedule:
+  #   - cron: "0 19 * * *"
   workflow_dispatch:
 
 jobs:
@@ -36,6 +39,9 @@ jobs:
           CONTENT_SOURCE_API_URL: ${{ secrets.CONTENT_SOURCE_API_URL }}
           CONTENT_SYNC_PAGE_SIZE: "50"
           CONTENT_SYNC_MAX_PAGES: "2"
+          NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+          INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
+          SYNC_API_KEY: ${{ secrets.SYNC_API_KEY }}
 
       - name: Trigger Vercel redeploy via Deploy Hook
         run: |

@@ -9,7 +9,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "全站攻略归档 | 次元绅士指南",
   description:
-    "在这里查看次元绅士指南收录的所有 Galgame 与绅士游戏攻略索引。按时间倒序排列，助您快速定位最新解析内容。",
+    "浏览次元绅士指南全站攻略归档，按更新时间倒序列出所有收录的绅游、Galgame 与视觉小说解析，快速定位全结局路线、回想解锁与存档管理指南，支持翻页查看全部作品。",
   alternates: {
     canonical: buildCanonicalPath("archive"),
   },
@@ -124,12 +124,12 @@ export default async function ArchivePage({
         )}
 
         <footer className="mt-12 flex justify-center border-t border-white/10 pt-12">
-          <a
+          <Link
             href="/"
             className="rounded-full border border-white/12 px-8 py-4 text-sm font-semibold tracking-[0.16em] text-white/75 transition hover:border-[--accent]/60 hover:text-[--ink-strong]"
           >
             返回首页
-          </a>
+          </Link>
         </footer>
       </div>
     </main>

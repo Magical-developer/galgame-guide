@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "联系与免责声明 | 次元绅士指南",
-  description: "了解次元绅士指南的免责声明。本站致力于为视觉小说爱好者提供技术性指南，并说明内容的来源与版权立场。",
+  description: "查看次元绅士指南的免责声明、内容来源说明与版权投诉渠道。本站仅提供技术性攻略指南，不存储或分发任何受版权保护的游戏本体文件。如有问题欢迎通过页面邮箱联系我们。",
 };
 
 export default function ContactPage() {

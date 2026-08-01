@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "服务条款 | 次元绅士指南",
-  description: "了解使用次元绅士指南网站的服务条款与条件。请在使用本站前仔细阅读。",
+  description: "阅读并了解使用次元绅士指南网站的服务条款、使用限制、知识产权声明、免责声明与第三方服务约定。请在访问本站前仔细阅读，继续使用即视为同意本条款。",
 };
 
 export default function TermsPage() {
@@ -17,7 +17,7 @@ export default function TermsPage() {
 
         <section className="prose prose-invert space-y-8 text-[--ink-soft]">
           <p>
-            欢迎使用次元绅士指南（以下简称"本站"）。访问和使用本网站，即表示您同意遵守以下服务条款。如果您不同意这些条款，请停止使用本站。
+            欢迎使用次元绅士指南（以下简称&quot;本站&quot;）。访问和使用本网站，即表示您同意遵守以下服务条款。如果您不同意这些条款，请停止使用本站。
           </p>
 
           <h2 className="text-2xl font-bold text-[--ink-strong]">1. 服务说明</h2>
