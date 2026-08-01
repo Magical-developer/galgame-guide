@@ -6,7 +6,7 @@ import { ArticleSection } from "@/components/article-section";
 import { CoverImage } from "@/components/cover-image";
 import { RelatedGames } from "@/components/related-games";
 import { siteConfig } from "@/lib/config";
-import { getAllGames, getGameBySlug, getGuideBySlug, getRecentSlugs } from "@/lib/games";
+import { getAllGames, getAllSlugs, getGameBySlug, getGuideBySlug } from "@/lib/games";
 import { findSection, parseFaq, parseGuideSections } from "@/lib/markdown";
 import { getRelatedGames } from "@/lib/related-games";
 import {
@@ -18,11 +18,14 @@ import {
 } from "@/lib/seo";
 import { generateFallbackContent } from "@/lib/content/generate-content";
 
-export const dynamicParams = true;
+// 全量预生成所有游戏页。dynamicParams=false 时未知路径直接返回静态 404
+// (零计算、零 DB 查询、零 ISR write),避免爬虫扫描垃圾 URL 耗尽 Vercel
+// Fluid CPU / ISR Writes 免费额度。新游戏通过每日 cron 重新部署自动入列。
+export const dynamicParams = false;
 export const revalidate = 86400;
 
 export async function generateStaticParams() {
-  const slugs = await getRecentSlugs(500);
+  const slugs = await getAllSlugs();
   return slugs.map((slug) => ({ slug }));
 }
 
@@ -217,14 +220,13 @@ export default async function GamePage({
               ))}
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2">
               {[
                 ["热度", game.views.toLocaleString()],
                 [
                   "更新时间",
                   new Date(game.updatedAt).toLocaleDateString("zh-CN"),
                 ],
-                ["下载方式", game.downloadLabel],
               ].map(([label, value]) => (
                 <div
                   key={label}

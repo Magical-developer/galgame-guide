@@ -49,13 +49,32 @@ function dedupeBySourceId(games: GameRecord[]): GameRecord[] {
   return [...groups.values()].map(pickCanonicalGame);
 }
 
-const safeQuery = async <T>(fn: () => Promise<T>, fallback: T, label: string): Promise<T> => {
-  try {
-    return await fn();
-  } catch (err) {
-    console.error(`[DB] ${label} failed:`, (err as Error).message);
-    return fallback;
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Turso free tier databases sleep when idle; the first connection can take
+// several seconds to cold-start. Retry with backoff so build-time prerender
+// (homepage, sitemap) doesn't silently render with empty data.
+const safeQuery = async <T>(
+  fn: () => Promise<T>,
+  fallback: T,
+  label: string,
+  maxAttempts = 3
+): Promise<T> => {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      if (attempt === maxAttempts) {
+        console.error(`[DB] ${label} failed after ${maxAttempts} attempts:`, (err as Error).message);
+        return fallback;
+      }
+      console.warn(
+        `[DB] ${label} attempt ${attempt}/${maxAttempts} failed: ${(err as Error).message}. Retrying in ${attempt}s...`
+      );
+      await sleep(attempt * 1000);
+    }
   }
+  return fallback;
 };
 
 export const getAllGames = cache(async (): Promise<GameRecord[]> => {

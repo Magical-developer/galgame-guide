@@ -13,32 +13,40 @@ const ensureSections = (markdown: string, game: GameRecord) => {
   return generateFallbackContent(game);
 };
 
-export const generateFallbackContent = (game: GameRecord) => `## 游戏剧情简介
-${game.title} 是一款深度融合了 ${game.tags.slice(0, 3).join("、")} 元素的 Galgame 新作。本作以其独特的叙事风格和精美的原画设计，在视觉小说领域获得了极高的关注度。
+export const generateFallbackContent = (game: GameRecord) => {
+  const tagList = game.tags.slice(0, 4).join("、") || "视觉小说";
+  const summary = (game.summary || "").trim();
+  const summaryExcerpt = summary.length > 260 ? `${summary.slice(0, 260)}……` : summary;
+  const isSteam = /steam/i.test(game.title);
+
+  return `## 游戏剧情简介
+${game.title} 是一款以${tagList}为核心元素的游戏作品。${summaryExcerpt ? `根据现有资料：${summaryExcerpt}` : "本站将持续补充本作的剧情设定与世界观信息。"}
 
 ## 核心推荐理由
-如果你偏好 ${game.tags.slice(0, 2).join("、")} 题材，那么 ${game.title} 绝对是不容错过的佳作。本作不仅在剧情分支设计上极其考究，更在角色情感刻画与事件连锁机制上达到了行业顶尖水平。
+如果你偏好${tagList}题材，那么 ${game.title} 值得加入待玩清单。${summaryExcerpt ? "从现有资料来看，本作在玩法与题材结合上有其独到之处。" : "本站将根据玩家反馈持续补充本作的推荐理由。"}
+
+## 角色路线与分歧选项
+以下为通用攻略思路：建议在关键剧情选项前保留独立存档，优先推进主线以确认各角色路线的开启条件。本作的具体分歧点整理中，请以游戏内提示为准。
 
 ## 完美攻略全流程
-- **共通线要点**：在进入角色分歧点前，建议在第 3-5 个关键选项处保留独立存档。
-- **路线切分**：优先推进主线剧情，确认核心女主角的情感倾向。
-- **结局达成**：注意关键选项对好感度的影响，避免因单一选项失误进入 Bad End。
+一周目建议完整体验主线剧情，二周目起再针对特定路线做选择回收。所有可能影响结局的选择节点，都建议养成先存档再选择的习惯。
 
 ## 全CG与回想场景解锁
-本作的全CG 解锁主要依赖于全结局的达成。建议玩家在完成一周目后，利用快进功能回收剩余的分支场景。部分动态 CG 可能需要特定的汉化補丁或解码补丁支持方能完整呈现。
+本作的全CG解锁通常依赖结局回收与特定事件触发。若包含隐藏回想，一般需要通关全部路线后开启。具体条件整理中。
 
 ## 存档管理与安装说明
-推荐采用多栏位存档策略：公共线结束前保留 1 个全局存档，各角色分歧处分别留 1-2 个独立存档。对于非官方版本的汉化游戏，请务必确认存档路径是否包含中文字符，以免造成数据损坏。
+${isSteam ? "本作为 STEAM 平台版本，注意云存档与本地存档的同步关系，切换设备时建议手动备份存档文件。" : "本作为独立/汉化发行版本，注意保留原始文件备份，避免汉化补丁覆盖导致存档读写异常。"}
 
 ## 常见问题 FAQ
-### 这款游戏是否有官方中文？
-请关注官方公告或汉化组动态。目前市面上流通的多为精修汉化版或 AI 润色版。
+### ${game.title} 属于什么类型的游戏？
+本作以${tagList}为核心要素，具体玩法与流程待本站完成深度解析后补充。
 
-### 如何快速达成真结局？
-建议参考本站整理的完美路线图，确保所有前置事件均已正确触发。
+### 这款游戏的汉化版本情况如何？
+流通版本信息请以发布页说明为准，本站解析完成后会补充汉化组与版本兼容性详情。
 
 ## 类似题材作品推荐
-如果你喜欢 ${game.title} 的画风或剧情逻辑，可以优先查阅带有 ${game.tags.slice(0, 2).join("、")} 标签的其他作品，这些同类佳作往往有着极高的重合度。`;
+如果你喜欢本作的题材设定，可以继续探索带有${tagList}标签的同类作品，本站归档页已按热度与更新时间整理相关索引。`;
+};
 
 export async function generateContent(game: GameRecord) {
   const prompt = buildGuidePrompt(game);

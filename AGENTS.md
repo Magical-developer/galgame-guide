@@ -20,6 +20,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - `pnpm content:sync` — fetch content from API, generate AI guides, write to DB
 - `pnpm compare:models` — test multiple AI models side-by-side
 - `pnpm db:init` — initialize database schema
+- `AI_FORCE_REGENERATE=1 pnpm generate:ai` — regenerate guide rows that only contain fallback-template content (the default mode skips them)
+- `AI_TOP_N=500 pnpm generate:ai` — only process top-N hottest games (pilot runs; each run takes one batch)
 
 ### Environment Setup
 - Copy `.env.example` to `.env.local` for local development
@@ -37,6 +39,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Vercel build command: `pnpm run content:sync && pnpm run build`
 - Cron job at 03:00 daily triggers `/api/cron/sync-content` which hits deploy hook
 - `vercel.json` configures both build command and cron schedule
+- Turso free tier cold-starts can fail the first DB connection during build; `lib/games.ts` retries with backoff, and homepage/sitemap are ISR (`revalidate`) so they self-heal at runtime
 
 ### Code Conventions
 - Path alias: `@/*` maps to `./*`

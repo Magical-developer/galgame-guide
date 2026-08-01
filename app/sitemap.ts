@@ -1,11 +1,18 @@
 import type { MetadataRoute } from "next";
 
 import { absoluteUrl } from "@/lib/config";
-import { getAllGames } from "@/lib/games";
+import { getAllSlugs, getGamesCount } from "@/lib/games";
+
+const ARCHIVE_PAGE_SIZE = 48;
+
+// Regenerate at runtime so the sitemap self-heals even if the build-time
+// database connection failed (otherwise it would ship with zero game URLs).
+export const revalidate = 86400;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const games = await getAllGames();
+  const [slugs, totalGames] = await Promise.all([getAllSlugs(), getGamesCount()]);
   const now = new Date();
+  const archivePages = Math.max(1, Math.ceil(totalGames / ARCHIVE_PAGE_SIZE));
 
   const staticPages = [
     { path: "/", priority: 1.0, freq: "daily" as const },
@@ -23,9 +30,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: p.freq,
       priority: p.priority,
     })),
-    ...games.map((game) => ({
-      url: absoluteUrl(`/${game.slug}`),
-      lastModified: game.updatedAt ? new Date(game.updatedAt) : now,
+    ...(archivePages > 1
+      ? Array.from({ length: archivePages - 1 }, (_, i) => ({
+          url: absoluteUrl(`/archive?page=${i + 2}`),
+          lastModified: now,
+          changeFrequency: "daily" as const,
+          priority: 0.7,
+        }))
+      : []),
+    ...slugs.map((slug) => ({
+      url: absoluteUrl(`/${slug}`),
+      lastModified: now,
       changeFrequency: "weekly" as const,
       priority: 0.8,
     })),

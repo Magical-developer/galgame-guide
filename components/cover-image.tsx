@@ -19,6 +19,7 @@ export function CoverImage({
   priority = false,
 }: CoverImageProps) {
   const [hasError, setHasError] = useState(!src);
+  const fallbackTitle = alt.replace(/\s*封面$/, "").trim();
 
   return (
     <>
@@ -36,9 +37,12 @@ export function CoverImage({
           }}
         />
       ) : (
-        <div className="absolute inset-0 flex items-center justify-center bg-[linear-gradient(180deg,#161d2b_0%,#0d1118_100%)]">
-          <span className="text-xs uppercase tracking-widest text-white/30">
-            封面加载失败
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[linear-gradient(160deg,#1a2130_0%,#10141c_60%,#0b0e14_100%)]">
+          <span className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/5 font-display text-2xl text-white/60">
+            {fallbackTitle.slice(0, 1)}
+          </span>
+          <span className="px-4 text-center text-xs tracking-[0.2em] text-white/35">
+            {fallbackTitle}
           </span>
         </div>
       )}

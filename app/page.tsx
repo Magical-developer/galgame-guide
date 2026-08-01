@@ -11,6 +11,8 @@ import {
   buildHomeTitle,
 } from "@/lib/seo";
 
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: buildHomeTitle(),
   description: buildHomeDescription(),
