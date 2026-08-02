@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "隐私政策 | 次元绅士指南",
-  description: "了解次元绅士指南如何收集、使用与保护您的访问数据。本站不强制用户注册，仅使用标准服务器日志与匿名分析工具优化浏览体验，并严格遵循最小必要原则处理用户信息。",
+  title: "隐私政策 | Galgame Guide",
+  description: "了解 Galgame Guide 如何收集、使用与保护访问数据。",
 };
 
 export default function PrivacyPage() {
@@ -15,7 +15,7 @@ export default function PrivacyPage() {
         </header>
 
         <section className="prose prose-invert space-y-6 text-[--ink-soft]">
-          <p>次元绅士指南尊重并致力于保护您的个人隐私。本协议旨在说明我们如何收集、使用及保护您的数据。</p>
+          <p>Galgame Guide 尊重并致力于保护您的个人隐私。本协议旨在说明我们如何收集、使用及保护您的数据。</p>
 
           <h2 className="text-2xl font-bold text-[--ink-strong]">1. 信息收集</h2>
           <p>
@@ -32,9 +32,9 @@ export default function PrivacyPage() {
             本站包含指向外部资源的链接。这些第三方平台拥有独立的隐私政策，本站对这些平台的内容和活动不承担任何责任。
           </p>
 
-          <h2 className="text-2xl font-bold text-[--ink-strong]">4. 广告与分析</h2>
+          <h2 className="text-2xl font-bold text-[--ink-strong]">4. 分析与广告</h2>
           <p>
-            我们可能与第三方广告联盟合作。这些合作伙伴可能在您的浏览器中放置 Cookie 以投放更符合您兴趣的广告。
+            本站不加载弹窗广告、Popunder 或广告联盟脚本。若未来引入分析或广告合作，将在此处说明其数据用途与退出方式。
           </p>
 
           <h2 className="text-2xl font-bold text-[--ink-strong]">5. 政策更新</h2>

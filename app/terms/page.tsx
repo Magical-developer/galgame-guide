@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "服务条款 | 次元绅士指南",
-  description: "阅读并了解使用次元绅士指南网站的服务条款、使用限制、知识产权声明、免责声明与第三方服务约定。请在访问本站前仔细阅读，继续使用即视为同意本条款。",
+  title: "服务条款 | Galgame Guide",
+  description: "阅读 Galgame Guide 的服务说明、使用限制、知识产权声明与第三方服务约定。",
 };
 
 export default function TermsPage() {
@@ -12,17 +12,17 @@ export default function TermsPage() {
         <header className="space-y-4">
           <span className="eyebrow">法律条款</span>
           <h1 className="font-display text-5xl text-[--ink-strong]">服务条款</h1>
-          <p className="text-sm text-white/50">最后更新日期：2026 年 6 月 1 日</p>
+          <p className="text-sm text-white/50">最后更新日期：2026 年 8 月 2 日</p>
         </header>
 
         <section className="prose prose-invert space-y-8 text-[--ink-soft]">
           <p>
-            欢迎使用次元绅士指南（以下简称&quot;本站&quot;）。访问和使用本网站，即表示您同意遵守以下服务条款。如果您不同意这些条款，请停止使用本站。
+            欢迎使用 Galgame Guide（以下简称&quot;本站&quot;）。访问和使用本网站，即表示您同意遵守以下服务条款。如果您不同意这些条款，请停止使用本站。
           </p>
 
           <h2 className="text-2xl font-bold text-[--ink-strong]">1. 服务说明</h2>
           <p>
-            次元绅士指南是一个专注于视觉小说（Visual Novel）与 Galgame 攻略索引的内容平台。我们提供游戏剧情解析、角色路线指引、全 CG 收集条件说明及存档管理等技术性指南。
+            Galgame Guide 是一个专注视觉小说（Visual Novel）与 Galgame 的作品发现索引，提供搜索、标签筛选、作品概览与相似条目浏览。
           </p>
 
           <h2 className="text-2xl font-bold text-[--ink-strong]">2. 使用限制</h2>
@@ -35,7 +35,7 @@ export default function TermsPage() {
 
           <h2 className="text-2xl font-bold text-[--ink-strong]">3. 知识产权</h2>
           <p>
-            本站所有原创攻略内容的版权归次元绅士指南所有。涉及的游戏作品、角色形象及相关素材的版权归其原始开发商或发行方所有。本站仅提供技术性指南，不存储或分发受版权保护的游戏本体。
+            本站原创界面与编辑说明的版权归 Galgame Guide 所有。涉及的游戏作品、角色形象及相关素材版权归其原始开发商或发行方所有。本站不存储或分发受版权保护的游戏本体。
           </p>
 
           <h2 className="text-2xl font-bold text-[--ink-strong]">4. 免责声明</h2>
@@ -45,7 +45,7 @@ export default function TermsPage() {
 
           <h2 className="text-2xl font-bold text-[--ink-strong]">5. 第三方服务</h2>
           <p>
-            本站可能包含来自第三方广告联盟的内容。这些第三方服务受其自身条款约束。我们建议选择信誉良好的广告合作伙伴，以保障用户体验。
+            本站可能包含普通合作伙伴链接。这些第三方站点受其自身条款和隐私政策约束，外链不代表本站对其全部内容作出背书。
           </p>
 
           <h2 className="text-2xl font-bold text-[--ink-strong]">6. 条款变更</h2>

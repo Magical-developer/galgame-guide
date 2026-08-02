@@ -8,23 +8,17 @@
     "build:redirects": "node scripts/build-redirects.mjs",
     "db:init": "node scripts/init-db.mjs",
     "content:sync": "node scripts/sync-content.mjs",
-    "generate:ai": "node scripts/generate-ai-guides.mjs",
     "audit:pages": "node scripts/audit-pages.mjs",
     "delete:pages": "node scripts/delete-pages.mjs",
-    "refill:guides": "node scripts/refill-fallback-guides.mjs",
-
-    "compare:models": "node scripts/compare-models.mjs",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
     "@libsql/client": "^0.17.2",
-    "@next/env": "16.2.2",
-    "next": "16.2.2",
+    "@next/env": "16.2.12",
+    "next": "16.2.12",
     "react": "19.2.4",
-    "react-dom": "19.2.4",
-    "react-markdown": "^10.1.0",
-    "remark-gfm": "^4.0.1"
+    "react-dom": "19.2.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -32,7 +26,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.2.2",
+    "eslint-config-next": "16.2.12",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

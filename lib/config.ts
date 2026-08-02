@@ -7,54 +7,28 @@ const numberFromEnv = (value: string | undefined, fallback: number) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
-const replaceTemplateToken = (template: string, token: string, value: string) =>
-  template.replaceAll(`{${token}}`, encodeURIComponent(value));
-
 export const siteConfig = {
-  name: "次元绅士指南 - 绅游推荐与 Galgame 全结局攻略索引",
-  headline: "提供最全的绅游推荐、Galgame 全结局攻略及全CG 存档指南。",
+  name: "Galgame Guide",
+  headline: "用作品、标签和更新时间建立一份可检索的 Galgame 发现指南。",
   description:
-    "次元绅士指南是专业的绅游推荐与 Galgame 攻略站。深耕视觉小说领域，为您提供详尽的绅士游戏剧情解析、全结局路线指南、回想场景解锁条件及存档路径说明。助您达成每一个真结局。",
+    "Galgame Guide 是一个独立的视觉小说与 Galgame 作品索引，提供站内检索、标签筛选、作品概览和相似条目发现。",
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
   mainSiteUrl: process.env.NEXT_PUBLIC_MAIN_SITE_URL ?? "http://localhost:3000",
-  mainSiteGameUrlTemplate:
-    process.env.MAIN_SITE_GAME_URL_TEMPLATE ?? "/?from=guide&slug={slug}",
   sourceApiUrl: process.env.CONTENT_SOURCE_API_URL ?? "http://localhost:3000",
   sourceAssetBaseUrl:
     process.env.CONTENT_SOURCE_ASSET_BASE_URL ?? "http://localhost:3000",
-  aiBaseUrl: process.env.AI_BASE_URL ?? "",
-  aiApiKey: process.env.AI_API_KEY ?? "",
-  aiModel: process.env.AI_MODEL ?? "",
   cronSecret: process.env.CRON_SECRET ?? "",
   syncPageSize: numberFromEnv(process.env.CONTENT_SYNC_PAGE_SIZE, 10),
   syncMaxPages: numberFromEnv(process.env.CONTENT_SYNC_MAX_PAGES, 3),
 };
 
-export const hasAiConfig = Boolean(
-  siteConfig.aiBaseUrl && siteConfig.aiApiKey && siteConfig.aiModel,
-);
-
 export const absoluteUrl = (pathname: string) =>
   new URL(pathname, siteConfig.siteUrl).toString();
 
-export const buildMainSiteGameUrl = (game: {
-  slug: string;
-  sourceId: string;
-  title: string;
-}) => {
-  const templated = replaceTemplateToken(
-    replaceTemplateToken(
-      replaceTemplateToken(
-        siteConfig.mainSiteGameUrlTemplate,
-        "slug",
-        game.slug,
-      ),
-      "sourceId",
-      game.sourceId,
-    ),
-    "title",
-    game.title,
-  );
-
-  return new URL(templated, siteConfig.mainSiteUrl).toString();
+export const buildMainSiteFriendUrl = () => {
+  const url = new URL(siteConfig.mainSiteUrl);
+  url.searchParams.set("utm_source", "guide");
+  url.searchParams.set("utm_medium", "referral");
+  url.searchParams.set("utm_campaign", "friend_link");
+  return url.toString();
 };

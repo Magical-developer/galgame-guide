@@ -1,25 +1,19 @@
 import type { GameRecord } from "@/lib/types/game";
 
 const sharedKeywords = [
-  "次元绅士指南",
-  "绅游推荐",
-  "Galgame攻略",
-  "绅士游戏攻略",
-  "全CG存档",
-  "回想解锁",
-  "视觉小说解析",
-  "汉化版攻略",
-  "游戏分歧路线",
-  "真结局达成条件",
+  "Galgame Guide",
+  "Galgame 索引",
+  "视觉小说目录",
+  "作品标签",
+  "游戏版本情报",
+  "视觉小说推荐",
 ];
 
 export const buildGameTitle = (game: GameRecord) =>
-  `${game.title} 攻略｜全结局达成路线｜回想场景解锁条件`;
+  `${game.title}｜作品档案与标签`;
 
 export const buildGameDescription = (game: GameRecord) => {
   const tags = game.tags.slice(0, 4).join("、") || "视觉小说";
-  const shortTags = game.tags.slice(0, 3).join(" / ") || "Galgame";
-
   let unique: string;
   if (game.summary && game.summary.length >= 80) {
     unique = game.summary.length > 100 ? game.summary.slice(0, 100) + "..." : game.summary;
@@ -30,15 +24,13 @@ export const buildGameDescription = (game: GameRecord) => {
     }
   }
 
-  return `${unique} — 深度攻略，涵盖 ${shortTags} 核心玩法、全结局分歧选项、回想场景触发条件与存档位置说明。`;
+  return `${unique} — 在 Galgame Guide 查看作品标签、更新时间、热度与相似条目。`;
 };
 
 export const buildGameKeywords = (game: GameRecord) => [
   game.title,
-  `${game.title}攻略`,
-  `${game.title}全CG`,
-  `${game.title}存档`,
-  `${game.title}结局`,
+  `${game.title}作品信息`,
+  `${game.title}标签`,
   ...game.tags,
   ...sharedKeywords,
 ];
@@ -46,18 +38,16 @@ export const buildGameKeywords = (game: GameRecord) => [
 export const buildCanonicalPath = (slug: string) => `/${slug}`;
 
 export const buildHomeTitle = () =>
-  `次元绅士指南｜绅游推荐与 Galgame 全结局攻略索引`;
+  "Galgame Guide｜视觉小说作品发现与标签索引";
 
 export const buildHomeDescription = () =>
-  "次元绅士指南是专业的绅游推荐与 Galgame 攻略索引门户，提供视觉小说全结局路线、回想场景解锁条件、全 CG 存档位置与汉化版安装说明，助您高效达成真结局与完美收集。";
+  "Galgame Guide 提供视觉小说与 Galgame 的站内检索、标签筛选、作品概览和相似条目发现，不根据标签推断未经核实的攻略信息。";
 
 export const buildHomeKeywords = () => [
   ...sharedKeywords,
-  "绅游推荐大全",
-  "绅士游戏指南",
-  "Galgame全结局",
-  "黄油全CG存档",
-  "视觉小说路线解析",
+  "Galgame 作品目录",
+  "视觉小说作品发现",
+  "Galgame 标签筛选",
 ];
 
 export const buildTwitterMeta = ({

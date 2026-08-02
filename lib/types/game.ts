@@ -38,23 +38,3 @@ export interface GameRecord {
   updatedAt: string;
   sourceHash: string;
 }
-
-export interface GuideDocument {
-  slug: string;
-  title: string;
-  markdown: string;
-  generatedAt: string;
-  sourceHash: string;
-  provider: string;
-  model: string;
-}
-
-export interface GuideSection {
-  title: string;
-  lines: string[];
-}
-
-export interface FaqItem {
-  question: string;
-  answer: string;
-}

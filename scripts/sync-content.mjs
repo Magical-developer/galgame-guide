@@ -308,101 +308,6 @@ async function fetchSourcePosts() {
   return items;
 }
 
-// ─── Fallback guide generator ──────────────────────────────────────────────
-
-const buildFallback = (game) => {
-  const tags = Array.isArray(game.tags) ? game.tags : [];
-  const tagList = tags.slice(0, 4).join("、") || "视觉小说";
-  const summary = (game.summary || "").trim();
-  const summaryExcerpt = summary.length > 260 ? `${summary.slice(0, 260)}……` : summary;
-  const isSteam = /steam/i.test(game.title || "");
-
-  return `## 游戏剧情简介
-
-${game.title} 是一款以${tagList}为核心元素的游戏作品。${summaryExcerpt ? `根据现有资料：${summaryExcerpt}` : "本站将持续补充本作的剧情设定与世界观信息。"}
-
-## 核心推荐理由
-
-如果你偏好${tagList}题材，那么 ${game.title} 值得加入待玩清单。${summaryExcerpt ? "从现有资料来看，本作在玩法与题材结合上有其独到之处。" : "本站将根据玩家反馈持续补充本作的推荐理由。"}
-
-## 角色路线与分歧选项
-
-以下为通用攻略思路：建议在关键剧情选项前保留独立存档，优先推进主线以确认各角色路线的开启条件。本作的具体分歧点整理中，请以游戏内提示为准。
-
-## 完美攻略全流程
-
-一周目建议完整体验主线剧情，二周目起再针对特定路线做选择回收。所有可能影响结局的选择节点，都建议养成先存档再选择的习惯。
-
-## 全CG与回想场景解锁
-
-本作的全CG解锁通常依赖结局回收与特定事件触发。若包含隐藏回想，一般需要通关全部路线后开启。具体条件整理中。
-
-## 存档管理与安装说明
-
-${isSteam ? "本作为 STEAM 平台版本，注意云存档与本地存档的同步关系，切换设备时建议手动备份存档文件。" : "本作为独立/汉化发行版本，注意保留原始文件备份，避免汉化补丁覆盖导致存档读写异常。"}
-
-## 常见问题 FAQ
-
-### ${game.title} 属于什么类型的游戏？
-
-本作以${tagList}为核心要素，具体玩法与流程待本站完成深度解析后补充。
-
-### 这款游戏的汉化版本情况如何？
-
-流通版本信息请以发布页说明为准，本站解析完成后会补充汉化组与版本兼容性详情。
-
-## 类似题材作品推荐
-
-如果你喜欢本作的题材设定，可以继续探索带有${tagList}标签的同类作品，本站归档页已按热度与更新时间整理相关索引。
-`;
-};
-
-async function fillEmptyGuides() {
-  const result = await db.execute(`
-    SELECT g.slug, g.title, g.summary, g.tags, g.views
-    FROM games g
-    LEFT JOIN guides gd ON g.slug = gd.slug
-    WHERE gd.slug IS NULL
-       OR gd.markdown IS NULL
-       OR LENGTH(TRIM(gd.markdown)) < 200
-    ORDER BY g.views DESC
-  `);
-
-  const pending = result.rows;
-  console.log(`\n[Fallback] Found ${pending.length} games without guides.`);
-  if (pending.length === 0) return 0;
-
-  let success = 0;
-  for (let i = 0; i < pending.length; i++) {
-    const row = pending[i];
-    const title = (row.title || "").trim();
-    const tags = (() => { try { return JSON.parse(row.tags || "[]"); } catch { return []; } })();
-    const markdown = buildFallback({ title, summary: row.summary || "", tags });
-
-    try {
-      await db.execute({
-        sql: `INSERT INTO guides (slug, markdown, provider, model, generated_at)
-              VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
-              ON CONFLICT(slug) DO UPDATE SET
-                markdown = excluded.markdown,
-                provider = excluded.provider,
-                model = excluded.model,
-                generated_at = CURRENT_TIMESTAMP`,
-        args: [row.slug, markdown, "sync-fallback", "rich-template"],
-      });
-      success++;
-      if (success <= 3 || success % 500 === 0) {
-        console.log(`[Fallback] [${i + 1}/${pending.length}] ✅ ${title.slice(0, 50)}`);
-      }
-    } catch (err) {
-      console.error(`[Fallback] [${i + 1}/${pending.length}] ❌ ${title.slice(0, 50)}: ${err.message}`);
-    }
-  }
-
-  console.log(`[Fallback] Done. Filled: ${success}/${pending.length}`);
-  return success;
-}
-
 // ─── Main ──────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -485,18 +390,12 @@ async function main() {
       ],
     });
 
-    if (!existingRow) {
-      await db.execute({
-        sql: `INSERT INTO guides (slug, markdown, provider, model, generated_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP) ON CONFLICT(slug) DO NOTHING`,
-        args: [finalSlug, "", "pending", ""],
-      });
-    }
   }
   console.log(`[Sync] Done. Created: ${created} | Updated: ${updated} | Skipped: ${skipped}`);
 
-  // Step 3: fill any empty guides
-  console.log("\n========== Step 3: Generate fallback guides ==========");
-  await fillEmptyGuides();
+  // Synced records remain catalog data until an editor adds sourced and
+  // reviewed material through a separate editorial workflow.
+  console.log("\n========== Editorial generation disabled ==========");
 
   // Step 4: notify search engines via IndexNow
   console.log("\n========== Step 4: IndexNow submission ==========");
@@ -505,7 +404,6 @@ async function main() {
     const urlsToSubmit = [
       absoluteUrl("/"),
       absoluteUrl("/archive"),
-      ...changedSlugs.map((slug) => absoluteUrl(`/${slug}`)),
     ];
     await submitIndexNow(urlsToSubmit);
   } else {

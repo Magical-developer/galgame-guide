@@ -5,7 +5,7 @@ import { useState } from "react";
 
 const navLinks = [
   { href: "/", label: "首页" },
-  { href: "/archive", label: "攻略归档" },
+  { href: "/archive", label: "作品索引" },
   { href: "/about", label: "关于我们" },
   { href: "/contact", label: "联系" },
 ];
@@ -17,7 +17,7 @@ export function Navbar() {
     <header className="sticky top-0 z-50 border-b border-white/5 bg-black/60 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3.5 sm:px-8 lg:px-12">
         <Link href="/" className="font-display text-lg tracking-[0.08em] text-[--ink-strong]">
-          次元绅士指南
+          Galgame Guide
         </Link>
 
         <nav className="hidden items-center gap-1 sm:flex">

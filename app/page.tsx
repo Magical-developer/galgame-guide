@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { GameCard } from "@/components/game-card";
 import { siteConfig } from "@/lib/config";
-import { getAllGames, getFeaturedGames } from "@/lib/games";
+import { getAllGames, getFeaturedGames, getTopTags } from "@/lib/games";
 import {
   buildCanonicalPath,
   buildHomeDescription,
@@ -29,9 +29,10 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [featuredGames, allGames] = await Promise.all([
+  const [featuredGames, allGames, topTags] = await Promise.all([
     getFeaturedGames(6),
     getAllGames(),
+    getTopTags(10),
   ]);
 
   // Sort by updatedAt for recent list
@@ -46,11 +47,10 @@ export default async function HomePage() {
     description: buildHomeDescription(),
     url: siteConfig.siteUrl,
     about: [
-      "次元绅士指南",
-      "绅游推荐",
-      "绅士游戏攻略",
-      "Galgame攻略",
-      "全CG存档",
+      "Galgame Guide",
+      "Galgame 作品索引",
+      "视觉小说目录",
+      "作品标签",
       "视觉小说",
     ],
     mainEntity: {
@@ -73,44 +73,51 @@ export default async function HomePage() {
       <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-16 px-5 py-8 sm:px-8 lg:px-12">
         <header className="grid gap-8 rounded-[2.5rem] border border-white/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] p-7 shadow-[0_40px_120px_rgba(0,0,0,0.38)] backdrop-blur lg:grid-cols-[1.25fr_0.75fr] lg:p-10">
           <div className="space-y-7">
-            <span className="eyebrow">绅游攻略索引门户</span>
+            <span className="eyebrow">Galgame / Visual Novel Index</span>
             <div className="space-y-5">
               <h1 className="max-w-4xl font-display text-5xl leading-none text-[--ink-strong] sm:text-6xl lg:text-7xl">
-                绅游推荐、Galgame 全结局达成指南。
+                把作品放进索引，
                 <span className="block text-[--accent]">
-                  为您拆解剧情分歧，快速解锁回想与全图存档。
+                  用可核对的信息做选择。
                 </span>
               </h1>
               <p className="max-w-2xl text-base leading-8 text-[--ink-soft] sm:text-lg">
-                次元绅士指南已收录 {allGames.length} 篇视觉小说与绅士游戏攻略。
-                无论您是在寻找核心角色路线的分歧点，还是需要全CG 存档的安装路径，
-                本站的结构化指南都能助您在最短时间内达成完美通关。
+                Galgame Guide 已整理 {allGames.length} 个视觉小说与 Galgame 条目。
+                这里展示作品标题、原始概览、标签、热度与更新时间；没有证据的路线、存档和解锁条件不会被写成攻略。
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-3">
-              <Link
-                href="/archive"
-                className="rounded-full bg-[--accent] px-6 py-3 text-sm font-semibold tracking-[0.16em] text-black transition hover:bg-[--accent-strong]"
-              >
-                浏览全部解析 ({allGames.length})
-              </Link>
-              <a
-                href={siteConfig.mainSiteUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-full border border-white/12 px-6 py-3 text-sm tracking-[0.16em] text-white/75 transition hover:border-[--accent]/60 hover:text-[--ink-strong]"
-              >
-                前往主站获取资源
-              </a>
+            <form action="/archive" method="get" className="flex max-w-2xl flex-col gap-3 sm:flex-row">
+              <label className="sr-only" htmlFor="home-grid-search">搜索作品或标签</label>
+              <input
+                id="home-grid-search"
+                name="q"
+                placeholder="搜索作品名、平台、语言或题材"
+                className="min-w-0 flex-1 rounded-full border border-white/12 bg-black/25 px-5 py-3 text-sm text-[--ink-strong] outline-none placeholder:text-white/35 focus:border-[--accent]/70"
+              />
+              <button className="rounded-full bg-[--accent] px-6 py-3 text-sm font-semibold tracking-[0.12em] text-black transition hover:bg-[--accent-strong]">
+                搜索索引
+              </button>
+            </form>
+
+            <div className="flex flex-wrap gap-2">
+              {topTags.map((item) => (
+                <Link
+                  key={item.name}
+                  href={`/archive?tag=${encodeURIComponent(item.name)}`}
+                  className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-white/65 transition hover:border-[--accent]/50 hover:text-[--accent]"
+                >
+                  {item.name} · {item.count}
+                </Link>
+              ))}
             </div>
           </div>
 
           <aside className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
             {[
               ["收录作品", `${allGames.length}+`],
-              ["内容分类", "绅游推荐 / Galgame"],
-              ["核心指南", "结局路线 / 全CG解锁"],
+              ["索引方式", "标题 / 标签 / 更新时间"],
+              ["内容原则", "不推断 / 可纠错"],
             ].map(([label, value]) => (
               <div
                 key={label}
@@ -130,9 +137,9 @@ export default async function HomePage() {
         <section id="hot-list" className="space-y-8">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div className="space-y-3">
-              <span className="eyebrow">热门解析</span>
+              <span className="eyebrow">Popular records</span>
               <h2 className="font-display text-4xl text-[--ink-strong]">
-                热门绅士游戏攻略
+                热门作品档案
               </h2>
             </div>
             <Link 
@@ -153,13 +160,13 @@ export default async function HomePage() {
         <section className="space-y-8">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div className="space-y-3">
-              <span className="eyebrow">最新更新</span>
+              <span className="eyebrow">Recently updated</span>
               <h2 className="font-display text-4xl text-[--ink-strong]">
-                最近收录的攻略解析
+                最近更新的条目
               </h2>
             </div>
             <p className="max-w-xl text-sm leading-7 text-white/55">
-              次元绅士指南保持每日同步更新，为您提供第一手的高质量绅游攻略。
+              更新时间只反映来源记录发生变化，不代表作品内容或版本一定更新。
             </p>
           </div>
 
@@ -172,28 +179,28 @@ export default async function HomePage() {
 
         <section className="grid gap-6 rounded-[2.5rem] border border-white/10 bg-black/20 p-6 sm:p-8 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="space-y-5">
-            <span className="eyebrow">专业绅游解析</span>
+            <span className="eyebrow">Information boundary</span>
             <h2 className="font-display text-4xl text-[--ink-strong]">
-              不止是推荐，更是每一位绅士的游戏必备手册
+              这份索引知道什么，也明确不知道什么。
             </h2>
             <p className="text-base leading-8 text-[--ink-soft]">
-              我们深知玩家对全收集的执着。本站所有的攻略文章均经过系统重构，重点突出关键分歧点与回想触发逻辑。
+              索引的职责是帮助你发现和比较作品，而不是把通用经验包装成具体攻略。未经核实的信息会留空，不会由标签自动补齐。
             </p>
           </div>
 
           <div className="grid gap-4">
             {[
               {
-                title: "多维度的绅游路线解析",
-                body: "通过详细的选项权重分析，我们为您标注了每一条角色路线的开启条件，确保您可以精准避开无谓的重复流程。",
+                title: "展示来源已有字段",
+                body: "标题、概览、标签、热度和更新时间按原始记录展示，不把推测写成作品事实。",
               },
               {
-                title: "回想场景与全CG收集条件",
-                body: "不再需要盲目探索。针对每一张特殊CG，我们都提供了明确的触发节点说明，包括多周目才能解锁的隐藏回想。",
+                title: "站内完成发现任务",
+                body: "搜索、标签筛选、排序和相似条目都在 Galgame Guide 内完成，不需要先跳到另一个站点。",
               },
               {
-                title: "存档位置与兼容性安装说明",
-                body: "整理了各版本绅士游戏的存档路径，特别针对汉化版游戏的存档读写问题提供了专业的技术指导。",
+                title: "为人工核验留接口",
+                body: "未来只有经过来源标注和人工复核的路线、版本或兼容信息，才会进入可索引的编辑内容。",
               },
             ].map((item, index) => (
               <article

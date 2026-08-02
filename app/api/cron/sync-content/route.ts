@@ -116,10 +116,11 @@ export async function GET() {
       message: "Redeploy triggered. Data sync runs on GitHub Actions.",
       deploymentId: result.id,
     });
-  } catch (error: any) {
-    console.error("[Cron] Fatal error:", error.message);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("[Cron] Fatal error:", message);
     return NextResponse.json(
-      { ok: false, message: "Internal error.", error: error.message },
+      { ok: false, message: "Internal error.", error: message },
       { status: 500 }
     );
   }

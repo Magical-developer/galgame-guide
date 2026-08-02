@@ -12,7 +12,7 @@ export function RelatedGames({ games }: { games: GameRecord[] }) {
       <div className="flex items-center gap-3">
         <span className="h-2 w-2 rounded-full bg-[--accent]" />
         <h2 className="font-display text-2xl tracking-[0.08em] text-[--ink-strong]">
-          类似游戏推荐
+          相似条目
         </h2>
       </div>
 

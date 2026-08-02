@@ -2,10 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import "@/app/globals.css";
-import { EmergencyBanner } from "@/components/emergency-banner";
-import { ExoClickHandler } from "@/components/exoclick-handler";
 import { Navbar } from "@/components/navbar";
-import { siteConfig } from "@/lib/config";
+import { buildMainSiteFriendUrl, siteConfig } from "@/lib/config";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.siteUrl),
@@ -16,14 +14,12 @@ export const metadata: Metadata = {
   },
   description: siteConfig.description,
   keywords: [
-    "次元绅士指南",
-    "绅游推荐",
-    "绅士游戏攻略",
-    "Galgame攻略",
-    "黄油攻略",
-    "全CG存档",
+    "Galgame Guide",
+    "Galgame 索引",
+    "视觉小说目录",
+    "作品标签",
+    "游戏版本情报",
     "视觉小说",
-    "汉化版攻略",
   ],
   alternates: {
     canonical: "/",
@@ -63,21 +59,20 @@ export const metadata: Metadata = {
 
 function Footer() {
   return (
-    <footer className="mt-auto border-t border-white/10 bg-black/40 py-12 backdrop-blur-xl">
+    <footer className="mt-auto border-t border-white/10 bg-black/40 py-12 backdrop-blur-sm">
       <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-12">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-4">
             <h3 className="font-display text-xl text-[--ink-strong]">{siteConfig.name}</h3>
             <p className="text-sm leading-6 text-[--ink-soft]">
-              专注于绅游推荐、Galgame 全结局攻略及全图存档指南的专业索引门户。
+              独立的视觉小说与 Galgame 作品发现索引，只展示来源已有字段和经过核验的编辑信息。
             </p>
           </div>
           <div className="space-y-4">
             <h4 className="text-xs font-bold uppercase tracking-widest text-white/40">快速导航</h4>
             <ul className="grid gap-2 text-sm text-[--ink-soft]">
               <li><Link href="/" className="hover:text-[--accent]">网站首页</Link></li>
-              <li><Link href="/archive" className="hover:text-[--accent]">攻略归档</Link></li>
-              <li><a href={siteConfig.mainSiteUrl} target="_blank" rel="noreferrer" className="hover:text-[--accent]">前往主站</a></li>
+              <li><Link href="/archive" className="hover:text-[--accent]">作品索引</Link></li>
             </ul>
           </div>
           <div className="space-y-4">
@@ -90,14 +85,22 @@ function Footer() {
             </ul>
           </div>
           <div className="space-y-4">
-            <h4 className="text-xs font-bold uppercase tracking-widest text-white/40">联系与支持</h4>
+            <h4 className="text-xs font-bold uppercase tracking-widest text-white/40">合作伙伴</h4>
             <p className="text-sm text-[--ink-soft]">
-              若有内容纠错或版权反馈，请查阅免责声明页面的联系方式。
+              Galgame Guide 独立提供发现与索引功能。外部合作站点仅作为普通友链列出。
             </p>
+            <a
+              href={buildMainSiteFriendUrl()}
+              target="_blank"
+              rel="noopener"
+              className="inline-flex text-sm text-[--accent] hover:underline"
+            >
+              KrzACG 社区 ↗
+            </a>
           </div>
         </div>
         <div className="mt-12 border-t border-white/5 pt-8 text-center text-xs text-white/30">
-          <p>© {new Date().getFullYear()} 次元绅士指南. All Rights Reserved.</p>
+          <p>© {new Date().getFullYear()} Galgame Guide. All Rights Reserved.</p>
         </div>
       </div>
     </footer>
@@ -111,9 +114,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN">
-      <body className="flex min-h-screen flex-col pt-11 sm:pt-12">
-        <ExoClickHandler />
-        <EmergencyBanner />
+      <body className="flex min-h-screen flex-col">
         <Navbar />
         {children}
         <Footer />

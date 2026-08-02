@@ -2,12 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { ArticleSection } from "@/components/article-section";
 import { CoverImage } from "@/components/cover-image";
 import { RelatedGames } from "@/components/related-games";
-import { siteConfig } from "@/lib/config";
-import { getAllGames, getAllSlugs, getGameBySlug, getGuideBySlug } from "@/lib/games";
-import { findSection, parseFaq, parseGuideSections } from "@/lib/markdown";
+import { buildMainSiteFriendUrl, siteConfig } from "@/lib/config";
+import { getAllGames, getGameBySlug } from "@/lib/games";
 import { getRelatedGames } from "@/lib/related-games";
 import {
   buildCanonicalPath,
@@ -16,18 +14,8 @@ import {
   buildGameTitle,
   buildTwitterMeta,
 } from "@/lib/seo";
-import { generateFallbackContent } from "@/lib/content/generate-content";
 
-// 全量预生成所有游戏页。dynamicParams=false 时未知路径直接返回静态 404
-// (零计算、零 DB 查询、零 ISR write),避免爬虫扫描垃圾 URL 耗尽 Vercel
-// Fluid CPU / ISR Writes 免费额度。新游戏通过每日 cron 重新部署自动入列。
-export const dynamicParams = false;
 export const revalidate = 86400;
-
-export async function generateStaticParams() {
-  const slugs = await getAllSlugs();
-  return slugs.map((slug) => ({ slug }));
-}
 
 export async function generateMetadata({
   params,
@@ -37,9 +25,7 @@ export async function generateMetadata({
   const { slug } = await params;
   const game = await getGameBySlug(slug);
 
-  if (!game) {
-    return {};
-  }
+  if (!game) return {};
 
   const title = buildGameTitle(game);
   const description = buildGameDescription(game);
@@ -49,21 +35,18 @@ export async function generateMetadata({
     title,
     description,
     keywords: buildGameKeywords(game),
-    alternates: {
-      canonical,
-    },
+    alternates: { canonical },
+    // 当前条目来自合作数据源，尚未经过逐条人工核验；保留给用户浏览与站内发现，
+    // 但不把镜像档案作为独立编辑内容提交搜索索引。
+    robots: { index: false, follow: true },
     openGraph: {
       title,
       description,
       url: canonical,
-      type: "article",
-      tags: game.tags,
-      images: [
-        {
-          url: game.cover,
-          alt: `${game.title} 封面`,
-        },
-      ],
+      type: "website",
+      images: game.cover
+        ? [{ url: game.cover, alt: `${game.title} 封面` }]
+        : undefined,
     },
     twitter: buildTwitterMeta({
       title,
@@ -73,98 +56,41 @@ export async function generateMetadata({
   };
 }
 
+function formatDate(value: string) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "未提供" : date.toLocaleDateString("zh-CN");
+}
+
 export default async function GamePage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const [game, allGames, guide] = await Promise.all([
+  const [game, allGames] = await Promise.all([
     getGameBySlug(slug),
     getAllGames(),
-    getGuideBySlug(slug),
   ]);
 
-  if (!game) {
-    notFound();
-  }
+  if (!game) notFound();
 
-  const markdown = guide?.markdown || generateFallbackContent(game);
-  const sections = parseGuideSections(markdown);
-  const faq = parseFaq(findSection(sections, "常见问题 FAQ"));
   const relatedGames = getRelatedGames(game, allGames);
   const canonical = `${siteConfig.siteUrl}/${game.slug}`;
-  const jsonLd = [
-    {
-      "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      itemListElement: [
-        {
-          "@type": "ListItem",
-          position: 1,
-          name: "首页",
-          item: siteConfig.siteUrl,
-        },
-        {
-          "@type": "ListItem",
-          position: 2,
-          name: game.title,
-          item: canonical,
-        },
-      ],
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CreativeWork",
+    name: game.title,
+    description: game.summary,
+    image: game.cover || undefined,
+    genre: game.tags,
+    dateModified: game.updatedAt || undefined,
+    mainEntityOfPage: canonical,
+    isPartOf: {
+      "@type": "CollectionPage",
+      name: siteConfig.name,
+      url: siteConfig.siteUrl,
     },
-    {
-      "@context": "https://schema.org",
-      "@type": "Article",
-      headline: game.title,
-      description: buildGameDescription(game),
-      image: [game.cover],
-      dateModified: game.updatedAt || new Date().toISOString(),
-      datePublished: game.createdAt || game.updatedAt || new Date().toISOString(),
-      mainEntityOfPage: {
-        "@type": "WebPage",
-        "@id": canonical,
-      },
-      author: {
-        "@type": "Organization",
-        name: "次元绅士指南",
-        url: siteConfig.siteUrl,
-      },
-      publisher: {
-        "@type": "Organization",
-        name: "次元绅士指南",
-        logo: {
-          "@type": "ImageObject",
-          url: `${siteConfig.siteUrl}/logo.png`,
-        },
-      },
-      about: [
-        game.title,
-        ...game.tags,
-        "KRZACG",
-        "GalGame",
-        "黄油",
-        "绅士游戏",
-        "存档",
-      ],
-    },
-    ...(faq.length > 0
-      ? [
-          {
-            "@context": "https://schema.org",
-            "@type": "FAQPage",
-            mainEntity: faq.map((item) => ({
-              "@type": "Question",
-              name: item.question,
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: item.answer,
-              },
-            })),
-          },
-        ]
-      : []),
-  ];
+  };
 
   return (
     <main className="shell">
@@ -178,164 +104,113 @@ export default async function GamePage({
             首页
           </Link>
           <span>/</span>
-          <span className="text-[--ink-strong]">{game.title}</span>
+          <Link href="/archive" className="transition hover:text-[--ink-strong]">
+            作品索引
+          </Link>
+          <span>/</span>
+          <span className="line-clamp-1 text-[--ink-strong]">{game.title}</span>
         </nav>
 
-        <section className="grid gap-8 rounded-[2.5rem] border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] p-6 shadow-[0_40px_120px_rgba(0,0,0,0.35)] lg:grid-cols-[0.92fr_1.08fr] lg:p-8">
+        <section className="grid gap-8 rounded-[2.5rem] border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] p-6 shadow-[0_40px_120px_rgba(0,0,0,0.35)] lg:grid-cols-[0.82fr_1.18fr] lg:p-8">
           <div className="relative overflow-hidden rounded-4xl border border-white/10 bg-black/30">
             <div className="relative aspect-4/5">
               <CoverImage
                 src={game.cover}
                 alt={`${game.title} 封面`}
                 priority
-                sizes="(max-width: 1024px) 100vw, 40vw"
+                sizes="(max-width: 1024px) 100vw, 38vw"
                 className="object-cover"
               />
             </div>
           </div>
 
-          <div className="space-y-7">
-            <span className="eyebrow">Guide page</span>
+          <div className="flex flex-col gap-7">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <span className="eyebrow">Record / {game.sourceId.slice(-8)}</span>
+              <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/50">
+                未经逐条人工核验
+              </span>
+            </div>
+
             <div className="space-y-4">
               <h1 className="font-display text-4xl leading-tight text-[--ink-strong] sm:text-5xl lg:text-6xl">
                 {game.title}
-                <span className="block text-[--accent]">攻略 + 全CG解锁 + 存档整理</span>
               </h1>
               <p className="text-base leading-8 text-[--ink-soft] sm:text-lg">
-                {game.summary}
-              </p>
-              <p className="text-sm leading-7 text-white/60 sm:text-base">
-                适合在查找 {game.title} 攻略、全CG、存档、结局时快速对照，也方便继续顺着 KRZACG、GalGame、黄油、绅士游戏相关题材往下找。
+                {game.summary || "来源记录没有提供可展示的作品概览。"}
               </p>
             </div>
 
             <div className="flex flex-wrap gap-2">
               {game.tags.map((tag) => (
-                <span
+                <Link
                   key={tag}
-                  className="rounded-full border border-white/10 px-3 py-1 text-xs tracking-[0.16em] text-white/75"
+                  href={`/archive?tag=${encodeURIComponent(tag)}`}
+                  className="rounded-full border border-white/10 px-3 py-1 text-xs tracking-[0.12em] text-white/75 transition hover:border-[--accent]/55 hover:text-[--accent]"
                 >
                   {tag}
-                </span>
+                </Link>
               ))}
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <dl className="grid gap-4 sm:grid-cols-2">
               {[
                 ["热度", game.views.toLocaleString()],
-                [
-                  "更新时间",
-                  new Date(game.updatedAt).toLocaleDateString("zh-CN"),
-                ],
+                ["首次收录", formatDate(game.createdAt)],
+                ["记录更新", formatDate(game.updatedAt)],
+                ["标签数量", String(game.tags.length)],
               ].map(([label, value]) => (
-                <div
-                  key={label}
-                  className="rounded-3xl border border-white/10 bg-black/20 p-4"
-                >
-                  <p className="text-xs uppercase tracking-[0.2em] text-white/45">
-                    {label}
-                  </p>
-                  <p className="mt-2 text-sm text-[--ink-strong]">{value}</p>
+                <div key={label} className="rounded-3xl border border-white/10 bg-black/20 p-4">
+                  <dt className="text-xs uppercase tracking-[0.2em] text-white/45">{label}</dt>
+                  <dd className="mt-2 text-sm text-[--ink-strong]">{value}</dd>
                 </div>
               ))}
-            </div>
+            </dl>
 
-            <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
+            <div className="space-y-2 pt-1">
               <a
-                href={`/go/${game.slug}`}
-                className="exoclick-popunder-trigger group rounded-[2rem] border border-[--accent]/40 bg-[linear-gradient(135deg,rgba(252,177,93,0.95),rgba(255,209,102,0.92))] px-6 py-5 text-black shadow-[0_20px_60px_rgba(252,177,93,0.28)] transition hover:-translate-y-0.5 hover:shadow-[0_28px_80px_rgba(252,177,93,0.34)]"
-              >
-                <div className="flex items-center justify-between gap-4">
-                  <div className="space-y-1.5">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-black/65">
-                      Main site access
-                    </p>
-                    <p className="text-xl font-semibold leading-tight sm:text-2xl">
-                      前往主站获取 {game.title} 资源
-                    </p>
-                    <p className="text-sm leading-6 text-black/70 sm:text-base">
-                      攻略先看这里，资源入口放在主站，点击后即可继续跳转。
-                    </p>
-                  </div>
-                  <span className="shrink-0 rounded-full bg-black px-4 py-2 text-sm font-semibold tracking-[0.12em] text-white transition group-hover:bg-black/90">
-                    立即前往 →
-                  </span>
-                </div>
-              </a>
-              <a
-                href={siteConfig.mainSiteUrl}
+                href={buildMainSiteFriendUrl()}
                 target="_blank"
-                rel="noreferrer"
-                className="flex items-center justify-center rounded-[2rem] border border-white/12 px-6 py-4 text-sm tracking-[0.16em] text-white/75 transition hover:border-[--accent]/60 hover:text-[--ink-strong]"
+                rel="noopener noreferrer"
+                referrerPolicy="no-referrer"
+                className="inline-flex w-full items-center justify-center rounded-2xl bg-[--accent] px-6 py-4 text-sm font-semibold tracking-[0.12em] text-black transition hover:bg-[--accent-strong]"
               >
-                返回主站
+                前往主站查看资源 ↗
               </a>
+              <p className="text-center text-xs text-white/40">
+                普通合作链接，不弹广告，不创建隐藏跳转。
+              </p>
             </div>
           </div>
         </section>
 
         <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-          <div className="space-y-6">
-            <ArticleSection section={findSection(sections, "游戏剧情简介")} />
-            <ArticleSection section={findSection(sections, "核心推荐理由")} />
-            <ArticleSection section={findSection(sections, "角色路线与分歧选项")} />
-            <ArticleSection section={findSection(sections, "完美攻略全流程")} />
-            <ArticleSection
-              section={findSection(sections, "全CG与回想场景解锁")}
-            />
-            <ArticleSection section={findSection(sections, "存档管理与安装说明")} />
-            <section className="rounded-4xl border border-[--accent]/25 bg-[linear-gradient(180deg,rgba(252,177,93,0.12),rgba(255,255,255,0.03))] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.18)] sm:p-8">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="space-y-2">
-                  <p className="text-xs uppercase tracking-[0.24em] text-[--accent]">
-                    Resource entry
-                  </p>
-                  <h2 className="font-display text-3xl text-[--ink-strong]">
-                    看完攻略后，直接去主站拿资源
-                  </h2>
-                  <p className="max-w-2xl text-sm leading-7 text-[--ink-soft] sm:text-base">
-                    如果你已经确认这作是自己想找的口味，现在可以直接跳到主站继续查看。
-                  </p>
-                </div>
-                <a
-                  href={`/go/${game.slug}`}
-                  className="exoclick-popunder-trigger inline-flex items-center justify-center rounded-full bg-[--accent] px-7 py-3.5 text-sm font-semibold tracking-[0.16em] text-black transition hover:bg-[--accent-strong]"
-                >
-                  去主站继续
-                </a>
-              </div>
-            </section>
-          </div>
+          <article className="rounded-4xl border border-white/10 bg-white/4 p-6 shadow-[0_25px_70px_rgba(0,0,0,0.2)] sm:p-8">
+            <p className="eyebrow">What this record contains</p>
+            <h2 className="mt-4 font-display text-3xl text-[--ink-strong]">作品档案，不是自动攻略</h2>
+            <div className="mt-5 space-y-4 text-sm leading-7 text-[--ink-soft] sm:text-base">
+              <p>
+                本页只整理来源记录中已经存在的标题、概览、标签、热度和时间字段，用于站内检索、比较和发现相似作品。
+              </p>
+              <p>
+                路线选择、结局条件、CG 解锁、补丁兼容和存档位置都需要具体版本与实测证据。在没有来源和人工复核前，Galgame Guide 不会根据题材标签自动生成这些结论。
+              </p>
+            </div>
+          </article>
 
-          <aside className="space-y-6">
-            <section className="space-y-5 rounded-4xl border border-white/10 bg-white/4 p-6 shadow-[0_25px_70px_rgba(0,0,0,0.22)] backdrop-blur sm:p-8">
-              <div className="flex items-center gap-3">
-                <span className="h-2 w-2 rounded-full bg-[--accent]" />
-                <h2 className="font-display text-2xl tracking-[0.08em] text-[--ink-strong]">
-                  FAQ
-                </h2>
-              </div>
-
-              <div className="space-y-4">
-                {faq.map((item) => (
-                  <article
-                    key={item.question}
-                    className="rounded-3xl border border-white/8 bg-black/20 p-4"
-                  >
-                    <h3 className="font-display text-lg text-[--ink-strong]">
-                      {item.question}
-                    </h3>
-                    <p className="mt-2 text-sm leading-7 text-[--ink-soft]">
-                      {item.answer}
-                    </p>
-                  </article>
-                ))}
-              </div>
-            </section>
-
-            <RelatedGames games={relatedGames} />
+          <aside className="rounded-4xl border border-[--accent]/25 bg-[linear-gradient(180deg,rgba(252,177,93,0.12),rgba(255,255,255,0.03))] p-6 sm:p-8">
+            <p className="eyebrow">Quality gate</p>
+            <h2 className="mt-4 font-display text-2xl text-[--ink-strong]">编辑内容的发布条件</h2>
+            <ul className="mt-5 space-y-3 text-sm leading-7 text-[--ink-soft]">
+              <li>明确对应的作品版本和运行平台</li>
+              <li>能够追溯的信息来源或实测记录</li>
+              <li>作者与复核时间清晰可见</li>
+              <li>未知信息保持未知，不用模板补齐</li>
+            </ul>
           </aside>
         </section>
+
+        <RelatedGames games={relatedGames} />
       </div>
     </main>
   );

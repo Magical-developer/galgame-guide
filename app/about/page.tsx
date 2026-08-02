@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "关于我们 | 次元绅士指南",
-  description: "了解次元绅士指南的创立宗旨与团队理念。我们专注于为视觉小说与绅士游戏玩家提供高质量的全结局攻略、角色路线解析与回想场景解锁指南。努力成为您通关每一部 Galgame 的可靠助手。",
+  title: "关于我们 | Galgame Guide",
+  description: "了解 Galgame Guide 的作品索引、信息边界、人工核验原则与合作数据说明。",
 };
 
 export default function AboutPage() {
@@ -11,33 +11,33 @@ export default function AboutPage() {
       <div className="mx-auto flex min-h-screen w-full max-w-4xl flex-col gap-10 px-5 py-16 sm:px-8">
         <header className="space-y-4">
           <span className="eyebrow">了解我们</span>
-          <h1 className="font-display text-5xl text-[--ink-strong]">关于次元绅士指南</h1>
+          <h1 className="font-display text-5xl text-[--ink-strong]">关于 Galgame Guide</h1>
         </header>
 
         <section className="prose prose-invert space-y-6 text-[--ink-soft]">
           <p>
-            <strong>次元绅士指南</strong> 是一个由资深视觉小说（Visual Novel）爱好者共同维护的专业攻略索引平台。
-            在美少女游戏与绅士向作品的世界里，错综复杂的分歧选项和关键的存档节点往往决定了玩家能否获得完整的剧情体验。
+            <strong>Galgame Guide</strong> 是一个视觉小说与 Galgame 作品发现索引。
+            它的任务是帮助用户按标题、标签、热度和更新时间浏览条目，而不是自动生成看似完整的游戏攻略。
           </p>
 
           <h2 className="text-2xl font-bold text-[--ink-strong]">我们的初衷</h2>
           <p>
-            我们发现，许多玩家在游玩过程中常因为错过一个细微的选项而不得不反复重打。
-            因此，我们建立了这个“绅游指南”门户，通过 AI 辅助创作与人工逻辑梳理，将原本散落在各处的攻略信息进行结构化重组。
+            大规模索引最容易犯的错误，是把标签和通用经验写成某一部作品的具体事实。
+            因此本站把“作品发现”和“编辑结论”分开：来源已有字段可以进入索引，路线、版本、兼容与存档信息只有在能够追溯和复核时才会发布。
           </p>
 
           <h2 className="text-2xl font-bold text-[--ink-strong]">我们提供什么</h2>
           <ul className="list-disc space-y-2 pl-5">
-            <li><strong>深度解析</strong>：每一篇攻略都包含核心剧情简介和多维度的推荐理由。</li>
-            <li><strong>路线指引</strong>：清晰标注关键分歧点，助您快速解锁全结局。</li>
-            <li><strong>技术支持</strong>：整理不同版本的存档路径，解决汉化版常见的兼容性问题。</li>
-            <li><strong>全CG回收</strong>：提供详细的回想场景触发条件汇总。</li>
+            <li><strong>作品检索</strong>：按作品名、题材、平台或语言标签查找条目。</li>
+            <li><strong>标签筛选</strong>：在同一索引内按热度、更新时间和标签缩小范围。</li>
+            <li><strong>相似发现</strong>：根据条目已有标签推荐可继续浏览的作品。</li>
+            <li><strong>信息边界</strong>：未知内容保持未知，不用自动模板制造确定感。</li>
           </ul>
 
           <h2 className="text-2xl font-bold text-[--ink-strong]">内容声明</h2>
           <p>
-            本站仅提供游戏系统、剧情逻辑和存档管理的【技术性指南】。本站自身不存储、不分发任何受版权保护的游戏本体文件。
-            所有资源链接均索引自外部合法平台，旨在方便玩家进行正版验证与攻略对照。
+            本站不存储、不分发游戏本体文件。作品名称、封面和介绍等资料可能来自合作数据源，相关版权归原始权利人所有。
+            合作关系不会改变本站的索引职责，外部站点仅在友链区域列出。
           </p>
         </section>
       </div>

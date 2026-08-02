@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { db } from "./db";
-import type { GameRecord, GuideDocument } from "@/lib/types/game";
+import type { GameRecord } from "@/lib/types/game";
 
 type RawRow = Record<string, unknown>;
 
@@ -147,6 +147,63 @@ export const getGamesCount = cache(async (): Promise<number> => {
   );
 });
 
+export type CatalogSort = "latest" | "popular" | "title";
+
+export const findGames = cache(
+  async ({
+    query = "",
+    tag = "",
+    sort = "latest",
+    page = 1,
+    pageSize = 48,
+  }: {
+    query?: string;
+    tag?: string;
+    sort?: CatalogSort;
+    page?: number;
+    pageSize?: number;
+  }): Promise<{ games: GameRecord[]; total: number }> => {
+    const normalizedQuery = query.trim().toLocaleLowerCase("zh-CN");
+    const normalizedTag = tag.trim().toLocaleLowerCase("zh-CN");
+    const allGames = await getAllGames();
+    const filtered = allGames.filter((game) => {
+      const tags = game.tags.map((item) => item.toLocaleLowerCase("zh-CN"));
+      const matchesTag = !normalizedTag || tags.includes(normalizedTag);
+      const haystack = [game.title, game.summary, ...game.tags]
+        .join("\n")
+        .toLocaleLowerCase("zh-CN");
+      return matchesTag && (!normalizedQuery || haystack.includes(normalizedQuery));
+    });
+
+    filtered.sort((a, b) => {
+      if (sort === "popular") return b.views - a.views;
+      if (sort === "title") return a.title.localeCompare(b.title, "zh-CN");
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
+
+    const safePage = Math.max(1, page);
+    const offset = (safePage - 1) * pageSize;
+    return {
+      games: filtered.slice(offset, offset + pageSize),
+      total: filtered.length,
+    };
+  },
+);
+
+export const getTopTags = cache(async (limit = 16) => {
+  const counts = new Map<string, number>();
+  const games = await getAllGames();
+  for (const game of games) {
+    for (const tag of new Set(game.tags.map((item) => item.trim()).filter(Boolean))) {
+      counts.set(tag, (counts.get(tag) ?? 0) + 1);
+    }
+  }
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "zh-CN"))
+    .slice(0, limit)
+    .map(([name, count]) => ({ name, count }));
+});
+
 export const getFeaturedGames = cache(async (limit = 9): Promise<GameRecord[]> => {
   return safeQuery(
     async () => {
@@ -174,29 +231,5 @@ export const getGameBySlug = cache(async (slug: string): Promise<GameRecord | nu
     },
     null,
     `getGameBySlug(${slug})`
-  );
-});
-
-export const getGuideBySlug = cache(async (slug: string): Promise<GuideDocument | null> => {
-  return safeQuery(
-    async () => {
-      const result = await db.execute({
-        sql: "SELECT * FROM guides WHERE slug = ?",
-        args: [slug],
-      });
-      if (result.rows.length === 0) return null;
-      const row = result.rows[0] as RawRow;
-      return {
-        slug: String(row.slug),
-        title: "",
-        markdown: String(row.markdown || ""),
-        generatedAt: String(row.generated_at || ""),
-        sourceHash: "",
-        provider: String(row.provider || ""),
-        model: String(row.model || ""),
-      };
-    },
-    null,
-    `getGuideBySlug(${slug})`
   );
 });
