@@ -11,12 +11,12 @@ export default function ContactPage() {
       <div className="mx-auto flex min-h-screen w-full max-w-4xl flex-col gap-10 px-5 py-16 sm:px-8">
         <header className="space-y-4">
           <span className="eyebrow">法律合规</span>
-          <h1 className="font-display text-5xl text-[--ink-strong]">免责声明与联系方式</h1>
+          <h1 className="font-display text-5xl text-ink-strong">免责声明与联系方式</h1>
         </header>
 
-        <section className="prose prose-invert space-y-8 text-[--ink-soft]">
+        <section className="prose prose-invert space-y-8 text-ink-soft">
           <div className="space-y-4 rounded-3xl border border-white/10 bg-black/20 p-8">
-            <h2 className="m-0 text-xl font-bold text-[--ink-strong]">免责声明 (Disclaimer)</h2>
+            <h2 className="m-0 text-xl font-bold text-ink-strong">免责声明 (Disclaimer)</h2>
             <p className="m-0">
               1. <strong>内容性质</strong>：Galgame Guide（以下简称“本站”）提供作品发现与索引信息。未标记为“已核验”的条目不构成具体攻略或兼容性承诺。
             </p>
@@ -32,10 +32,10 @@ export default function ContactPage() {
           </div>
 
           <div className="space-y-4">
-            <h2 className="text-2xl font-bold text-[--ink-strong]">联系我们</h2>
+            <h2 className="text-2xl font-bold text-ink-strong">联系我们</h2>
             <p>如果您有任何建议、内容纠错或版权投诉，请通过以下方式与我们取得联系：</p>
             <ul className="list-disc space-y-2 pl-5">
-              <li><strong>投诉/合作</strong>：<a href="mailto:dmca@krzacg.com" className="text-[--accent] hover:underline">dmca@krzacg.com</a></li>
+              <li><strong>投诉/合作</strong>：<a href="mailto:dmca@krzacg.com" className="text-accent hover:underline">dmca@krzacg.com</a></li>
               <li><strong>内容反馈</strong>：请在邮件中附上条目 URL、需要纠正的字段与可核对来源。</li>
             </ul>
           </div>

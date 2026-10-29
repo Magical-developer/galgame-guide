@@ -1,127 +1,81 @@
 import { headers } from "next/headers";
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
 import { siteConfig } from "@/lib/config";
-
-function isAuthorized(authorization: string | null, userAgent: string | null) {
-  if (
-    siteConfig.cronSecret &&
-    authorization === `Bearer ${siteConfig.cronSecret}`
-  ) {
-    return true;
-  }
-  if (userAgent?.includes("vercel-cron")) {
-    return true;
-  }
-  return false;
-}
+import { db } from "@/lib/db";
+import { runCatalogSync } from "@/lib/sync/engine.mjs";
 
 export const maxDuration = 60;
+export const dynamic = "force-dynamic";
 
-export async function GET() {
+// 每天只抓最新几页就够：主站日均新增约 20–40 篇，2 页（100 条）足够覆盖，
+// 也不会把函数执行时间拖长。要补历史用 `pnpm content:sync --full`。
+const INCREMENTAL_MAX_PAGES = Number(process.env.CRON_SYNC_MAX_PAGES ?? 2);
+
+function isAuthorized(authorization: string | null, userAgent: string | null) {
+  // 配置了 CRON_SECRET 就只认 Bearer。旧实现允许 UA 含 "vercel-cron" 直接放行，
+  // 而 UA 可以随意伪造，等于密钥配了也不生效。
+  if (siteConfig.cronSecret) {
+    return authorization === `Bearer ${siteConfig.cronSecret}`;
+  }
+  // 未配置密钥时保留 Vercel Cron 的 UA 识别，避免直接打断计划任务。
+  return Boolean(userAgent?.includes("vercel-cron"));
+}
+
+export async function GET(request: Request) {
   const requestHeaders = await headers();
   const authorization = requestHeaders.get("authorization");
   const userAgent = requestHeaders.get("user-agent");
 
-  console.log("[Cron] Incoming request:", { userAgent, hasAuth: !!authorization });
+  if (!siteConfig.cronSecret) {
+    console.warn(
+      "[Cron] CRON_SECRET is not configured; falling back to User-Agent check. Set CRON_SECRET to enforce bearer auth."
+    );
+  }
 
   if (!isAuthorized(authorization, userAgent)) {
     console.error("[Cron] Unauthorized access attempt.");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // NOTE: Data sync has been moved to GitHub Actions because the source API
-  // blocks all Vercel IP ranges. This cron only triggers a redeploy.
-  console.log("[Cron] Data sync runs on GitHub Actions. Triggering redeploy only...");
-
-  const token = process.env.VERCEL_TOKEN;
-  const projectId = process.env.VERCEL_PROJECT_ID;
-  const teamId = process.env.VERCEL_ORG_ID;
-
-  if (!token || !projectId) {
-    console.error("[Cron] Missing VERCEL_TOKEN or VERCEL_PROJECT_ID.");
-    return NextResponse.json(
-      { ok: false, message: "Missing redeploy config." },
-      { status: 500 }
-    );
-  }
+  const startedAt = Date.now();
+  // 带 ?dry_run=1 时只统计不写库，用于上线后验证连通性。
+  const dryRun = new URL(request.url).searchParams.get("dry_run") === "1";
 
   try {
-    console.log("[Cron] Fetching latest production deployment...");
-    const listParams = new URLSearchParams({
-      projectId,
-      limit: "1",
-      state: "READY",
-      target: "production",
+    const stats = await runCatalogSync({
+      db,
+      sourceApiUrl: siteConfig.sourceApiUrl,
+      maxPages: INCREMENTAL_MAX_PAGES,
+      categorySlugs: process.env.CONTENT_SYNC_CATEGORY_SLUGS ?? "hentai,game",
+      excludeKeywords: process.env.CONTENT_SYNC_EXCLUDE_KEYWORDS ?? undefined,
+      imageCdnBase: process.env.CONTENT_SYNC_IMAGE_CDN ?? undefined,
+      dryRun,
+      log: (message) => console.log(message),
     });
-    if (teamId) listParams.set("teamId", teamId);
 
-    const listResponse = await fetch(
-      `https://api.vercel.com/v6/deployments?${listParams.toString()}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-
-    if (!listResponse.ok) {
-      const text = await listResponse.text();
-      console.error("[Cron] Vercel List API failed:", listResponse.status, text);
-      return NextResponse.json(
-        { ok: false, message: `Vercel List API error: ${listResponse.status}` },
-        { status: 502 }
-      );
+    // 数据变了就让发现面立即重建，不必等 1h 的 ISR 窗口。
+    if (!dryRun) {
+      revalidatePath("/");
+      revalidatePath("/archive");
     }
 
-    const { deployments } = await listResponse.json();
-    const latestId = deployments?.[0]?.uid;
-    if (!latestId) {
-      return NextResponse.json(
-        { ok: false, message: "No production deployment found." },
-        { status: 404 }
-      );
-    }
-
-    console.log("[Cron] Triggering redeploy for deployment ID:", latestId);
-    const redeployParams = new URLSearchParams();
-    if (teamId) redeployParams.set("teamId", teamId);
-
-    const redeployResponse = await fetch(
-      `https://api.vercel.com/v13/deployments?${redeployParams.toString()}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          deploymentId: latestId,
-          name: "galgame-guide",
-          target: "production",
-        }),
-      }
-    );
-
-    if (!redeployResponse.ok) {
-      const text = await redeployResponse.text();
-      console.error("[Cron] Redeploy failed:", redeployResponse.status, text);
-      return NextResponse.json(
-        { ok: false, message: `Redeploy failed: ${redeployResponse.status}` },
-        { status: 502 }
-      );
-    }
-
-    const result = await redeployResponse.json();
-    console.log("[Cron] Redeploy triggered:", result.id || result.url);
+    const durationMs = Date.now() - startedAt;
+    console.log("[Cron] sync done:", { ...stats, durationMs });
 
     return NextResponse.json({
       ok: true,
-      message: "Redeploy triggered. Data sync runs on GitHub Actions.",
-      deploymentId: result.id,
+      ...stats,
+      durationMs,
+      syncedAt: new Date().toISOString(),
     });
-  } catch (error: unknown) {
+  } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("[Cron] Fatal error:", message);
+    console.error("[Cron] sync failed:", message);
     return NextResponse.json(
-      { ok: false, message: "Internal error.", error: message },
-      { status: 500 }
+      { ok: false, message, durationMs: Date.now() - startedAt },
+      { status: 502 }
     );
   }
 }

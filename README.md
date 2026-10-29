@@ -38,8 +38,23 @@ pnpm build
 
 ## 数据同步
 
+**日常增量是自动的**：Vercel Cron 每天 03:00（东八区）调用 `/api/cron/sync-content`，
+拉取主站最新 2 页（约 100 条）写进 Turso，并触发首页 / 作品索引重新验证。
+`vercel.json` 里配置这条 cron；路由与 CLI 共用 `lib/sync/engine.mjs`，不存在两份逻辑。
+
+手动命令只用于回填和排查：
+
 ```bash
-pnpm content:sync
+pnpm content:sync                 # 增量：最多 2 页
+pnpm content:sync --full          # 全量回填：最多 200 页
+pnpm content:sync --dry-run       # 只统计，不写库
+```
+
+线上验证同步是否通（需要 `CRON_SECRET`）：
+
+```bash
+curl -H "Authorization: Bearer $CRON_SECRET" \
+  "https://galgame-guide.vercel.app/api/cron/sync-content?dry_run=1"
 ```
 
 核心环境变量：
@@ -47,9 +62,13 @@ pnpm content:sync
 ```dotenv
 NEXT_PUBLIC_SITE_URL=https://your-guide.example
 NEXT_PUBLIC_MAIN_SITE_URL=https://www.krzacg.com
-CONTENT_SOURCE_API_URL=https://service.krzacg.com/api/posts/hot-feed
+CONTENT_SOURCE_API_URL=https://service.krzacg.com/api/posts/latest
+CONTENT_SYNC_CATEGORY_SLUGS=hentai,game
+CONTENT_SYNC_EXCLUDE_KEYWORDS=mmd,vam,virt-a-mate
+CRON_SECRET=...
+CRON_SYNC_MAX_PAGES=2
 TURSO_DATABASE_URL=libsql://...
 TURSO_AUTH_TOKEN=...
 ```
 
-同步脚本不会生成或更新攻略正文，只维护作品索引字段。旧 `guides` 表暂时保留用于数据库兼容，但运行时不读取。
+同步只维护作品索引字段，不生成或更新攻略正文。旧 `guides` 表暂时保留用于数据库兼容，但运行时不读取。

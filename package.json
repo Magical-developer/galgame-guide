@@ -8,8 +8,7 @@
     "build:redirects": "node scripts/build-redirects.mjs",
     "db:init": "node scripts/init-db.mjs",
     "content:sync": "node scripts/sync-content.mjs",
-    "audit:pages": "node scripts/audit-pages.mjs",
-    "delete:pages": "node scripts/delete-pages.mjs",
+    "dedupe:games": "node scripts/dedupe-games.mjs",
     "start": "next start",
     "lint": "eslint"
   },

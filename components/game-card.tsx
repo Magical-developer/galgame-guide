@@ -7,7 +7,7 @@ export function GameCard({ game, priority = false }: { game: GameRecord; priorit
   return (
     <Link
       href={`/${game.slug}`}
-      className="group overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] shadow-[0_35px_80px_rgba(0,0,0,0.25)] transition duration-300 hover:-translate-y-1 hover:border-[--accent]/60"
+      className="group overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] shadow-[0_35px_80px_rgba(0,0,0,0.25)] transition duration-300 hover:-translate-y-1 hover:border-accent/60"
     >
       <div className="relative aspect-[4/5] overflow-hidden">
         <CoverImage
@@ -25,7 +25,7 @@ export function GameCard({ game, priority = false }: { game: GameRecord; priorit
 
       <div className="space-y-4 p-5">
         <div className="space-y-2">
-          <h2 className="line-clamp-2 font-display text-xl leading-tight text-[--ink-strong]">
+          <h2 className="line-clamp-2 font-display text-xl leading-tight text-ink-strong">
             {game.title}
           </h2>
         </div>

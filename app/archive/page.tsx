@@ -96,10 +96,10 @@ export default async function ArchivePage({
       <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-12 px-5 py-12 sm:px-8 lg:px-12">
         <header className="space-y-4">
           <span className="eyebrow">Catalog / Index view</span>
-          <h1 className="font-display text-5xl text-[--ink-strong] sm:text-6xl">
+          <h1 className="font-display text-5xl text-ink-strong sm:text-6xl">
             作品索引
           </h1>
-          <p className="max-w-2xl text-lg text-[--ink-soft]">
+          <p className="max-w-2xl text-lg text-ink-soft">
             用作品名、标签、热度和更新时间缩小范围。当前条件下找到 {total} 个条目。
           </p>
         </header>
@@ -112,7 +112,7 @@ export default async function ArchivePage({
                 name="q"
                 defaultValue={q}
                 placeholder="输入作品名、平台、语言或题材"
-                className="w-full rounded-2xl border border-white/12 bg-black/30 px-4 py-3 text-sm text-[--ink-strong] outline-none placeholder:text-white/35 focus:border-[--accent]/70"
+                className="w-full rounded-2xl border border-white/12 bg-black/30 px-4 py-3 text-sm text-ink-strong outline-none placeholder:text-white/35 focus:border-accent/70"
               />
             </label>
             <label className="space-y-2">
@@ -120,7 +120,7 @@ export default async function ArchivePage({
               <select
                 name="sort"
                 defaultValue={sort}
-                className="w-full rounded-2xl border border-white/12 bg-[#101318] px-4 py-3 text-sm text-[--ink-strong] outline-none focus:border-[--accent]/70"
+                className="w-full rounded-2xl border border-white/12 bg-[#101318] px-4 py-3 text-sm text-ink-strong outline-none focus:border-accent/70"
               >
                 <option value="latest">最近更新</option>
                 <option value="popular">热度优先</option>
@@ -128,7 +128,7 @@ export default async function ArchivePage({
               </select>
             </label>
             {tag ? <input type="hidden" name="tag" value={tag} /> : null}
-            <button className="self-end rounded-2xl bg-[--accent] px-6 py-3 text-sm font-semibold text-black transition hover:bg-[--accent-strong]">
+            <button className="self-end rounded-2xl bg-accent px-6 py-3 text-sm font-semibold text-black transition hover:bg-accent-strong">
               筛选索引
             </button>
           </form>
@@ -138,7 +138,7 @@ export default async function ArchivePage({
               href={buildArchiveHref({ q, tag, sort }, { tag: "", page: 1 })}
               className={`rounded-full border px-3 py-1.5 text-xs transition ${
                 !tag
-                  ? "border-[--accent]/60 bg-[--accent]/10 text-[--accent]"
+                  ? "border-accent/60 bg-accent/10 text-accent"
                   : "border-white/10 text-white/60 hover:border-white/25"
               }`}
             >
@@ -150,7 +150,7 @@ export default async function ArchivePage({
                 href={buildArchiveHref({ q, tag, sort }, { tag: item.name, page: 1 })}
                 className={`rounded-full border px-3 py-1.5 text-xs transition ${
                   tag === item.name
-                    ? "border-[--accent]/60 bg-[--accent]/10 text-[--accent]"
+                    ? "border-accent/60 bg-accent/10 text-accent"
                     : "border-white/10 text-white/60 hover:border-white/25"
                 }`}
               >
@@ -168,8 +168,8 @@ export default async function ArchivePage({
 
         {games.length === 0 && (
           <div className="rounded-[2.5rem] border border-white/10 bg-black/20 py-20 text-center">
-            <p className="text-[--ink-soft]">没有匹配条目。请减少关键词，或清除标签后重试。</p>
-            <Link href="/archive" className="mt-4 inline-flex text-sm text-[--accent] hover:underline">
+            <p className="text-ink-soft">没有匹配条目。请减少关键词，或清除标签后重试。</p>
+            <Link href="/archive" className="mt-4 inline-flex text-sm text-accent hover:underline">
               清除筛选
             </Link>
           </div>
@@ -180,7 +180,7 @@ export default async function ArchivePage({
             {page > 1 && (
               <Link
                 href={buildArchiveHref({ q, tag, sort }, { page: page - 1 })}
-                className="rounded-full border border-white/12 px-5 py-2.5 text-sm tracking-[0.12em] text-white/75 transition hover:border-[--accent]/60 hover:text-[--ink-strong]"
+                className="rounded-full border border-white/12 px-5 py-2.5 text-sm tracking-[0.12em] text-white/75 transition hover:border-accent/60 hover:text-ink-strong"
               >
                 ← 上一页
               </Link>
@@ -199,8 +199,8 @@ export default async function ArchivePage({
                   href={buildArchiveHref({ q, tag, sort }, { page: Number(p) })}
                   className={`rounded-full px-5 py-2.5 text-sm tracking-[0.12em] transition ${
                     p === page
-                      ? "bg-[--accent] font-semibold text-black"
-                      : "border border-white/12 text-white/75 hover:border-[--accent]/60 hover:text-[--ink-strong]"
+                      ? "bg-accent font-semibold text-black"
+                      : "border border-white/12 text-white/75 hover:border-accent/60 hover:text-ink-strong"
                   }`}
                 >
                   {p}
@@ -210,7 +210,7 @@ export default async function ArchivePage({
             {page < totalPages && (
               <Link
                 href={buildArchiveHref({ q, tag, sort }, { page: page + 1 })}
-                className="rounded-full border border-white/12 px-5 py-2.5 text-sm tracking-[0.12em] text-white/75 transition hover:border-[--accent]/60 hover:text-[--ink-strong]"
+                className="rounded-full border border-white/12 px-5 py-2.5 text-sm tracking-[0.12em] text-white/75 transition hover:border-accent/60 hover:text-ink-strong"
               >
                 下一页 →
               </Link>
@@ -221,7 +221,7 @@ export default async function ArchivePage({
         <footer className="mt-12 flex justify-center border-t border-white/10 pt-12">
           <Link
             href="/"
-            className="rounded-full border border-white/12 px-8 py-4 text-sm font-semibold tracking-[0.16em] text-white/75 transition hover:border-[--accent]/60 hover:text-[--ink-strong]"
+            className="rounded-full border border-white/12 px-8 py-4 text-sm font-semibold tracking-[0.16em] text-white/75 transition hover:border-accent/60 hover:text-ink-strong"
           >
             返回首页
           </Link>

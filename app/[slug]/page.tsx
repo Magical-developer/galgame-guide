@@ -25,7 +25,9 @@ export async function generateMetadata({
   const { slug } = await params;
   const game = await getGameBySlug(slug);
 
-  if (!game) return {};
+  // 必须在这里 notFound：页面进入流式渲染后再调用，响应头已经发出 200，
+  // 只能渲染 404 内容（软 404）。metadata 阶段抛 404 才能给出真正的状态码。
+  if (!game) notFound();
 
   const title = buildGameTitle(game);
   const description = buildGameDescription(game);
@@ -100,15 +102,15 @@ export default async function GamePage({
       />
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-10 px-5 py-8 sm:px-8 lg:px-12">
         <nav className="flex flex-wrap items-center gap-3 text-sm text-white/55">
-          <Link href="/" className="transition hover:text-[--ink-strong]">
+          <Link href="/" className="transition hover:text-ink-strong">
             首页
           </Link>
           <span>/</span>
-          <Link href="/archive" className="transition hover:text-[--ink-strong]">
+          <Link href="/archive" className="transition hover:text-ink-strong">
             作品索引
           </Link>
           <span>/</span>
-          <span className="line-clamp-1 text-[--ink-strong]">{game.title}</span>
+          <span className="line-clamp-1 text-ink-strong">{game.title}</span>
         </nav>
 
         <section className="grid gap-8 rounded-[2.5rem] border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] p-6 shadow-[0_40px_120px_rgba(0,0,0,0.35)] lg:grid-cols-[0.82fr_1.18fr] lg:p-8">
@@ -133,10 +135,10 @@ export default async function GamePage({
             </div>
 
             <div className="space-y-4">
-              <h1 className="font-display text-4xl leading-tight text-[--ink-strong] sm:text-5xl lg:text-6xl">
+              <h1 className="font-display text-4xl leading-tight text-ink-strong sm:text-5xl lg:text-6xl">
                 {game.title}
               </h1>
-              <p className="text-base leading-8 text-[--ink-soft] sm:text-lg">
+              <p className="text-base leading-8 text-ink-soft sm:text-lg">
                 {game.summary || "来源记录没有提供可展示的作品概览。"}
               </p>
             </div>
@@ -146,7 +148,7 @@ export default async function GamePage({
                 <Link
                   key={tag}
                   href={`/archive?tag=${encodeURIComponent(tag)}`}
-                  className="rounded-full border border-white/10 px-3 py-1 text-xs tracking-[0.12em] text-white/75 transition hover:border-[--accent]/55 hover:text-[--accent]"
+                  className="rounded-full border border-white/10 px-3 py-1 text-xs tracking-[0.12em] text-white/75 transition hover:border-accent/55 hover:text-accent"
                 >
                   {tag}
                 </Link>
@@ -162,7 +164,7 @@ export default async function GamePage({
               ].map(([label, value]) => (
                 <div key={label} className="rounded-3xl border border-white/10 bg-black/20 p-4">
                   <dt className="text-xs uppercase tracking-[0.2em] text-white/45">{label}</dt>
-                  <dd className="mt-2 text-sm text-[--ink-strong]">{value}</dd>
+                  <dd className="mt-2 text-sm text-ink-strong">{value}</dd>
                 </div>
               ))}
             </dl>
@@ -173,7 +175,7 @@ export default async function GamePage({
                 target="_blank"
                 rel="noopener noreferrer"
                 referrerPolicy="no-referrer"
-                className="inline-flex w-full items-center justify-center rounded-2xl bg-[--accent] px-6 py-4 text-sm font-semibold tracking-[0.12em] text-black transition hover:bg-[--accent-strong]"
+                className="inline-flex w-full items-center justify-center rounded-2xl bg-accent px-6 py-4 text-sm font-semibold tracking-[0.12em] text-black transition hover:bg-accent-strong"
               >
                 前往主站查看资源 ↗
               </a>
@@ -187,8 +189,8 @@ export default async function GamePage({
         <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
           <article className="rounded-4xl border border-white/10 bg-white/4 p-6 shadow-[0_25px_70px_rgba(0,0,0,0.2)] sm:p-8">
             <p className="eyebrow">What this record contains</p>
-            <h2 className="mt-4 font-display text-3xl text-[--ink-strong]">作品档案，不是自动攻略</h2>
-            <div className="mt-5 space-y-4 text-sm leading-7 text-[--ink-soft] sm:text-base">
+            <h2 className="mt-4 font-display text-3xl text-ink-strong">作品档案，不是自动攻略</h2>
+            <div className="mt-5 space-y-4 text-sm leading-7 text-ink-soft sm:text-base">
               <p>
                 本页只整理来源记录中已经存在的标题、概览、标签、热度和时间字段，用于站内检索、比较和发现相似作品。
               </p>
@@ -198,10 +200,10 @@ export default async function GamePage({
             </div>
           </article>
 
-          <aside className="rounded-4xl border border-[--accent]/25 bg-[linear-gradient(180deg,rgba(252,177,93,0.12),rgba(255,255,255,0.03))] p-6 sm:p-8">
+          <aside className="rounded-4xl border border-accent/25 bg-[linear-gradient(180deg,rgba(252,177,93,0.12),rgba(255,255,255,0.03))] p-6 sm:p-8">
             <p className="eyebrow">Quality gate</p>
-            <h2 className="mt-4 font-display text-2xl text-[--ink-strong]">编辑内容的发布条件</h2>
-            <ul className="mt-5 space-y-3 text-sm leading-7 text-[--ink-soft]">
+            <h2 className="mt-4 font-display text-2xl text-ink-strong">编辑内容的发布条件</h2>
+            <ul className="mt-5 space-y-3 text-sm leading-7 text-ink-soft">
               <li>明确对应的作品版本和运行平台</li>
               <li>能够追溯的信息来源或实测记录</li>
               <li>作者与复核时间清晰可见</li>

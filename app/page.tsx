@@ -75,13 +75,13 @@ export default async function HomePage() {
           <div className="space-y-7">
             <span className="eyebrow">Galgame / Visual Novel Index</span>
             <div className="space-y-5">
-              <h1 className="max-w-4xl font-display text-5xl leading-none text-[--ink-strong] sm:text-6xl lg:text-7xl">
+              <h1 className="max-w-4xl font-display text-5xl leading-none text-ink-strong sm:text-6xl lg:text-7xl">
                 把作品放进索引，
-                <span className="block text-[--accent]">
+                <span className="block text-accent">
                   用可核对的信息做选择。
                 </span>
               </h1>
-              <p className="max-w-2xl text-base leading-8 text-[--ink-soft] sm:text-lg">
+              <p className="max-w-2xl text-base leading-8 text-ink-soft sm:text-lg">
                 Galgame Guide 已整理 {allGames.length} 个视觉小说与 Galgame 条目。
                 这里展示作品标题、原始概览、标签、热度与更新时间；没有证据的路线、存档和解锁条件不会被写成攻略。
               </p>
@@ -93,9 +93,9 @@ export default async function HomePage() {
                 id="home-grid-search"
                 name="q"
                 placeholder="搜索作品名、平台、语言或题材"
-                className="min-w-0 flex-1 rounded-full border border-white/12 bg-black/25 px-5 py-3 text-sm text-[--ink-strong] outline-none placeholder:text-white/35 focus:border-[--accent]/70"
+                className="min-w-0 flex-1 rounded-full border border-white/12 bg-black/25 px-5 py-3 text-sm text-ink-strong outline-none placeholder:text-white/35 focus:border-accent/70"
               />
-              <button className="rounded-full bg-[--accent] px-6 py-3 text-sm font-semibold tracking-[0.12em] text-black transition hover:bg-[--accent-strong]">
+              <button className="rounded-full bg-accent px-6 py-3 text-sm font-semibold tracking-[0.12em] text-black transition hover:bg-accent-strong">
                 搜索索引
               </button>
             </form>
@@ -105,7 +105,7 @@ export default async function HomePage() {
                 <Link
                   key={item.name}
                   href={`/archive?tag=${encodeURIComponent(item.name)}`}
-                  className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-white/65 transition hover:border-[--accent]/50 hover:text-[--accent]"
+                  className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-white/65 transition hover:border-accent/50 hover:text-accent"
                 >
                   {item.name} · {item.count}
                 </Link>
@@ -126,7 +126,7 @@ export default async function HomePage() {
                 <p className="text-xs uppercase tracking-[0.25em] text-white/45">
                   {label}
                 </p>
-                <p className="mt-3 font-display text-3xl text-[--ink-strong]">
+                <p className="mt-3 font-display text-3xl text-ink-strong">
                   {value}
                 </p>
               </div>
@@ -138,13 +138,13 @@ export default async function HomePage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div className="space-y-3">
               <span className="eyebrow">Popular records</span>
-              <h2 className="font-display text-4xl text-[--ink-strong]">
+              <h2 className="font-display text-4xl text-ink-strong">
                 热门作品档案
               </h2>
             </div>
             <Link 
               href="/archive"
-              className="text-sm font-semibold tracking-[0.1em] text-[--accent] hover:underline"
+              className="text-sm font-semibold tracking-[0.1em] text-accent hover:underline"
             >
               查看全部档案 →
             </Link>
@@ -161,7 +161,7 @@ export default async function HomePage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div className="space-y-3">
               <span className="eyebrow">Recently updated</span>
-              <h2 className="font-display text-4xl text-[--ink-strong]">
+              <h2 className="font-display text-4xl text-ink-strong">
                 最近更新的条目
               </h2>
             </div>
@@ -180,10 +180,10 @@ export default async function HomePage() {
         <section className="grid gap-6 rounded-[2.5rem] border border-white/10 bg-black/20 p-6 sm:p-8 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="space-y-5">
             <span className="eyebrow">Information boundary</span>
-            <h2 className="font-display text-4xl text-[--ink-strong]">
+            <h2 className="font-display text-4xl text-ink-strong">
               这份索引知道什么，也明确不知道什么。
             </h2>
-            <p className="text-base leading-8 text-[--ink-soft]">
+            <p className="text-base leading-8 text-ink-soft">
               索引的职责是帮助你发现和比较作品，而不是把通用经验包装成具体攻略。未经核实的信息会留空，不会由标签自动补齐。
             </p>
           </div>
@@ -208,14 +208,14 @@ export default async function HomePage() {
                 className="rounded-[1.75rem] border border-white/8 bg-[linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] p-5 shadow-[0_18px_40px_rgba(0,0,0,0.18)]"
               >
                 <div className="flex items-start gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[--accent]/30 bg-[--accent]/10 font-display text-lg text-[--accent]">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-accent/30 bg-accent/10 font-display text-lg text-accent">
                     0{index + 1}
                   </div>
                   <div className="space-y-2">
-                    <h3 className="font-display text-2xl text-[--ink-strong]">
+                    <h3 className="font-display text-2xl text-ink-strong">
                       {item.title}
                     </h3>
-                    <p className="text-sm leading-7 text-[--ink-soft] sm:text-[15px]">
+                    <p className="text-sm leading-7 text-ink-soft sm:text-[15px]">
                       {item.body}
                     </p>
                   </div>

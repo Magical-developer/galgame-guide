@@ -1,4 +1,10 @@
-@import "tailwindcss";
+@import "tailwindcss" source(none);
+
+/* 关闭自动内容探测，只扫描真正的源码目录。
+   原因：Tailwind v4 默认扫描仓库内所有未被 .gitignore 忽略的文件，文档/审计报告里
+   只要出现旧 class 名（例如方括号变量写法），就会被当成真实用法生成非法 CSS。 */
+@source "../app";
+@source "../components";
 
 :root {
   --background: #090b10;
@@ -19,6 +25,13 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--ink-strong);
+  /* Tailwind v4 已移除 v3 的 `[--foo]` → `var(--foo)` 隐式转换。
+     这些语义色必须注册成主题变量，才能用 text-ink-strong / bg-accent
+     这类命名 utility（以及 /10 透明度修饰符）生成合法 CSS。 */
+  --color-ink-strong: var(--ink-strong);
+  --color-ink-soft: var(--ink-soft);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
   --font-sans: var(--font-body);
   --font-display: var(--font-display);
 }
