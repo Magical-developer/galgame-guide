@@ -53,10 +53,6 @@ export default function TermsPage() {
             我们保留随时修改本服务条款的权利。任何更改将在本页面发布后立即生效。继续使用本站即表示您接受修订后的条款。
           </p>
 
-          <h2 className="text-2xl font-bold text-ink-strong">7. 联系我们</h2>
-          <p>
-            如果您对本服务条款有任何疑问，请通过<a href="mailto:dmca@krzacg.com" className="text-accent hover:underline">dmca@krzacg.com</a>联系我们。
-          </p>
         </section>
       </div>
     </main>

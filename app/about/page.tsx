@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "关于我们",
@@ -37,9 +36,7 @@ export default function AboutPage() {
           <h2 className="text-2xl font-bold text-ink-strong">内容声明</h2>
           <p>
             作品名称、简介等资料来自公开数据源，版权归原始开发商或发行方所有。
-            若权利方认为本站收录的内容侵犯了其权益，可通过
-            <Link href="/contact" className="text-accent hover:underline">联系页面</Link>
-            告知，核实后会移除。
+            本站不存储、不分发任何游戏文件，页面上的外部链接指向第三方站点。
           </p>
         </section>
       </div>

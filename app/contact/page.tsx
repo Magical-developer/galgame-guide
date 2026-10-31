@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "联系与免责声明",
-  description: "Galgame Guide 的免责声明、版权投诉与内容纠错方式。",
+  title: "免责声明",
+  description: "Galgame Guide 的免责声明与内容使用说明。",
 };
 
 export default function ContactPage() {
@@ -11,7 +11,7 @@ export default function ContactPage() {
       <div className="mx-auto flex min-h-screen w-full max-w-4xl flex-col gap-10 px-5 py-16 sm:px-8">
         <header className="space-y-4">
           <span className="eyebrow">法律合规</span>
-          <h1 className="font-display text-5xl text-ink-strong">免责声明与联系方式</h1>
+          <h1 className="font-display text-5xl text-ink-strong">免责声明</h1>
         </header>
 
         <section className="prose prose-invert space-y-8 text-ink-soft">
@@ -31,14 +31,6 @@ export default function ContactPage() {
             </p>
           </div>
 
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold text-ink-strong">联系我们</h2>
-            <p>有问题、想纠错，或者要提版权投诉，发邮件给我们：</p>
-            <ul className="list-disc space-y-2 pl-5">
-              <li><strong>投诉/合作</strong>：<a href="mailto:dmca@krzacg.com" className="text-accent hover:underline">dmca@krzacg.com</a></li>
-              <li><strong>内容纠错</strong>：请附上页面链接、哪里不对，以及可核对的来源。</li>
-            </ul>
-          </div>
         </section>
       </div>
     </main>
