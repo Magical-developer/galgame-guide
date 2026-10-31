@@ -121,8 +121,19 @@ export default async function GamePage({
           </h1>
 
           <p className="mt-5 text-base leading-8 text-ink-soft sm:text-lg">
-            {game.summary}
+            {game.aiIntro ?? game.summary}
           </p>
+
+          {game.aiPoints.length > 0 && (
+            <ul className="mt-5 space-y-2 text-sm leading-7 text-ink-soft">
+              {game.aiPoints.map((point) => (
+                <li key={point} className="flex gap-2.5">
+                  <span className="mt-2.5 size-1.5 shrink-0 rounded-full bg-accent" />
+                  <span>{point}</span>
+                </li>
+              ))}
+            </ul>
+          )}
 
           {game.tags.length > 0 && (
             <div className="mt-7 flex flex-wrap gap-2">

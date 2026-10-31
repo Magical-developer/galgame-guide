@@ -41,4 +41,15 @@ export interface GameRecord {
   createdAt: string;
   updatedAt: string;
   sourceHash: string;
+  /**
+   * AI 改写的「中性作品介绍」。为空时页面回退到清洗后的原始简介。
+   *
+   * 由 lib/intro/engine.mjs 每天增量生成，只改写上游已有的事实，
+   * 不允许引入输入里没有的信息（数字会被脚本逐个比对出处）。
+   */
+  aiIntro: string | null;
+  /** 客观特征短句，2-4 条 */
+  aiPoints: string[];
+  /** 生成时间，用作 sitemap 的 lastModified，让爬虫看到「每天在更新」 */
+  aiGeneratedAt: string | null;
 }

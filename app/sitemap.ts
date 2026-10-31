@@ -22,13 +22,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 2026-10-31 恢复全量作品页：站点定位从「攻略站」改为「作品资料库」后，
   // 作品页就是它唯一的内容资产，不进 sitemap 等于没有承接入口。
   // 单文件上限 50,000 条，当前 3,876 条远未触顶，不需要分片。
+  //
+  // lastModified 优先用 AI 介绍的生成时间：每天增量生成 20 条，
+  // 这样 sitemap 每天都有一小批页面刷新，是给爬虫的「站点在更新」信号。
   const games = await getAllGames();
-  const gameEntries: MetadataRoute.Sitemap = games.map((game) => ({
-    url: absoluteUrl(`/${game.slug}`),
-    lastModified: game.updatedAt ? new Date(game.updatedAt) : now,
-    changeFrequency: "monthly" as const,
-    priority: 0.6,
-  }));
+  const gameEntries: MetadataRoute.Sitemap = games.map((game) => {
+    const stamp = game.aiGeneratedAt ?? game.updatedAt;
+    return {
+      url: absoluteUrl(`/${game.slug}`),
+      lastModified: stamp ? new Date(stamp) : now,
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
+    };
+  });
 
   return [
     ...staticPages.map((page) => ({

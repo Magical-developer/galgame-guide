@@ -55,8 +55,39 @@ const mapRowToGame = (row: RawRow, allowedTags: Set<string>): GameRecord => {
     createdAt: String(row.created_at || ""),
     updatedAt: String(row.updated_at || ""),
     sourceHash: String(row.source_hash || ""),
+    aiIntro: parseAiIntro(row.ai_intro),
+    aiPoints: parseAiPoints(row.ai_points),
+    aiGeneratedAt: row.ai_generated_at ? String(row.ai_generated_at) : null,
   };
 };
+
+/**
+ * 读取层再校验一次 AI 介绍。
+ *
+ * 生成端（lib/intro/engine.mjs）已经卡过黑名单，但那是历史某一版词表的结果；
+ * 词表更新后，旧数据可能带着当时漏掉的词。这里命中就直接弃用、回退到原始简介，
+ * 页面不会因为一条脏数据整页变成成人内容页。
+ */
+function parseAiIntro(raw: unknown): string | null {
+  const text = String(raw ?? "").trim();
+  if (text.length < 40) return null;
+  if (isBlockedTag(text)) return null;
+  return text;
+}
+
+function parseAiPoints(raw: unknown): string[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(String(raw));
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map((item) => String(item).trim())
+      .filter((item) => item.length > 0 && !isBlockedTag(item))
+      .slice(0, 4);
+  } catch {
+    return [];
+  }
+}
 
 const ASCII_REGEX = /^[\x00-\x7F]+$/;
 

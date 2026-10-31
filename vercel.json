@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/sync-content",
       "schedule": "0 19 * * *"
+    },
+    {
+      "path": "/api/cron/generate-intro",
+      "schedule": "30 20 * * *"
     }
   ]
 }
