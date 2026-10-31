@@ -26,9 +26,11 @@ export function GameCard({ game }: { game: GameRecord }) {
         {game.title}
       </h2>
 
-      <p className="mt-3 line-clamp-3 text-sm leading-7 text-ink-soft">
-        {game.summary}
-      </p>
+      {game.summary ? (
+        <p className="mt-3 line-clamp-3 text-sm leading-7 text-ink-soft">
+          {game.summary}
+        </p>
+      ) : null}
 
       {game.tags.length > 0 && (
         <div className="mt-auto flex flex-wrap gap-2 pt-5">

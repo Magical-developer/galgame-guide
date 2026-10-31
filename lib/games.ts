@@ -50,7 +50,7 @@ const mapRowToGame = (row: RawRow, allowedTags: Set<string>): GameRecord => {
     slug: String(row.slug || ""),
     title,
     tags: filterTags(parseTags(row.tags), allowedTags),
-    summary: buildSummaryText(title, String(row.summary || "")),
+    summary: buildSummaryText(String(row.summary || "")),
     views: Number(row.views || 0),
     createdAt: String(row.created_at || ""),
     updatedAt: String(row.updated_at || ""),

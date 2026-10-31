@@ -18,7 +18,7 @@
  * 黑名单只针对明确的成人词，其余类型/平台/语言标签原样保留。
  */
 const BLOCKED_TAG_PATTERN =
-  /(绅士|成人|r18|nsfw|hentai|h-games|porn|巨乳|爆乳|贫乳|后宫|ntr|寝取|触手|内射|中出|精液|射精|口交|足交|自慰|乱交|露出|调教|催眠|人妻|熟女|御姐|萝莉|正太|异种|兽交|淫|痴|乳首|巨根|无码|无修正|强暴|步兵|骑兵|亲密描写|耳舐め|色情|肛|エロ|偷拍|捆绑|舔|造人|性福|成熟向|bbc|bdsm)/iu;
+  /(绅士|成人|r18|nsfw|hentai|h-games|porn|巨乳|爆乳|贫乳|后宫|ntr|寝取|触手|内射|中出|精液|射精|口交|口爆|足交|乳交|自慰|乱交|露出|调教|催眠|人妻|熟女|御姐|萝莉|正太|异种|兽交|淫|痴|乳首|巨根|无码|无修正|强暴|强奸|輪姦|轮奸|步兵|骑兵|亲密描写|耳舐め|色情|肛|エロ|偷拍|捆绑|舔|造人|性福|成熟向|bbc|bdsm|后入|後入|女上位|男上位|颜射|顔射|潮吹|3p|双飞|双飛|火车便当|火車便當|发情|発情|绝顶|絶頂|肉便器|受精|孕ませ|妊娠|奸|娼|援交|卖春|売春|风俗|風俗|监禁|監禁|凌辱|孕腹|痴汉|痴漢|淫乱|淫亂|拔作|里番|裏番|工口|エッチ|性交|性爱|性愛|手交)/iu;
 
 /** 常见标签的大小写/别名归一，避免同一篇里出现 SLG 和 slg 两个。 */
 const TAG_ALIASES: Record<string, string> = {
@@ -127,9 +127,14 @@ export function cleanSummary(summary: string): string {
   return text.replace(/\s+/g, " ").replace(/^[\s/／|｜]+|[\s/／|｜]+$/gu, "");
 }
 
-/** 简介缺失或清洗后过短时给一句兜底，避免页面出现空段落。 */
-export function buildSummaryText(title: string, summary: string): string {
+/**
+ * 清洗后的简介。太短就返回空串，不再兜一句模板。
+ *
+ * 2026-11-01 改：此前不足 20 字时返回「{标题} 的作品资料条目，收录标题、类型
+ * 标签与更新时间。」—— 3,876 个页面里凡是短简介的都共用这一句，等于自己给站点
+ * 制造重复内容，正是搜索引擎判「薄页/门页」的特征。宁可少一段文字，也不要模板句。
+ */
+export function buildSummaryText(summary: string): string {
   const cleaned = cleanSummary(summary);
-  if (cleaned.length >= 20) return cleaned;
-  return `${title} 的作品资料条目，收录标题、类型标签与更新时间。`;
+  return cleaned.length >= 20 ? cleaned : "";
 }
