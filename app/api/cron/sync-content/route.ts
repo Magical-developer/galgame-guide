@@ -49,7 +49,7 @@ export async function GET(request: Request) {
       db,
       sourceApiUrl: siteConfig.sourceApiUrl,
       maxPages: INCREMENTAL_MAX_PAGES,
-      categorySlugs: process.env.CONTENT_SYNC_CATEGORY_SLUGS ?? "hentai,game",
+      categorySlugs: process.env.CONTENT_SYNC_CATEGORY_SLUGS ?? "game,single-player-games",
       excludeKeywords: process.env.CONTENT_SYNC_EXCLUDE_KEYWORDS ?? undefined,
       imageCdnBase: process.env.CONTENT_SYNC_IMAGE_CDN ?? undefined,
       dryRun,

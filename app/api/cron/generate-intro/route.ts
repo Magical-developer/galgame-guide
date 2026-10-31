@@ -16,9 +16,12 @@ export const dynamic = "force-dynamic";
  * 为什么要按天而不是一次跑完：
  *   1. Cloudflare Workers AI 免费额度按天算，攒着跑会撞配额；
  *   2. 「站点每天都有新内容」本身就是给爬虫的更新信号，一次跑完等于没信号。
- * 20 条 × 并发 4 ≈ 40s，在函数 60s 上限内。
+ *
+ * 2026-11-01 实测：并发 4 时每条约 3.6s，100 条跑 90.8s、0 失败、未撞 429。
+ * 40 条 ≈ 36s，留足 60s 上限的余量。存量补齐靠本地 `pnpm intro:gen --limit=N`
+ * 批量跑，不受函数时限约束。
  */
-const DAILY_LIMIT = Number(process.env.CRON_INTRO_LIMIT ?? 20);
+const DAILY_LIMIT = Number(process.env.CRON_INTRO_LIMIT ?? 40);
 
 function isAuthorized(authorization: string | null, userAgent: string | null) {
   if (siteConfig.cronSecret) {
