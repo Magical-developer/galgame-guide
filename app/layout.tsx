@@ -3,6 +3,7 @@ import Link from "next/link";
 import Script from "next/script";
 
 import "@/app/globals.css";
+import { BookmarkHint } from "@/components/bookmark-hint";
 import { Navbar } from "@/components/navbar";
 import { analytics, buildMainSiteFriendUrl, siteConfig } from "@/lib/config";
 
@@ -68,6 +69,7 @@ function Footer() {
             <p className="text-sm leading-6 text-ink-soft">
               收录 Galgame 与视觉小说的作品资料，帮你在下载之前先看清楚是什么游戏。
             </p>
+            <BookmarkHint variant="footer" />
           </div>
           <div className="space-y-4">
             <h4 className="text-xs font-bold uppercase tracking-widest text-white/40">快速导航</h4>

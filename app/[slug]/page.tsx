@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 
+import { BookmarkHint } from "@/components/bookmark-hint";
 import { RelatedGames } from "@/components/related-games";
 import { buildMainSiteGameUrl } from "@/lib/config";
 import { getAllGames, getAllSlugs, getGameBySlug } from "@/lib/games";
@@ -222,6 +223,8 @@ export default async function GamePage({
             </p>
           </div>
         </article>
+
+        <BookmarkHint />
 
         <RelatedGames games={relatedGames} />
       </div>

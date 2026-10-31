@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { BookmarkHint } from "@/components/bookmark-hint";
 import { GameCard } from "@/components/game-card";
 import { siteConfig } from "@/lib/config";
 import { getAllGames, getFeaturedGames, getTopTags } from "@/lib/games";
@@ -222,6 +223,8 @@ export default async function HomePage() {
             ))}
           </div>
         </section>
+
+        <BookmarkHint />
       </div>
     </main>
   );
