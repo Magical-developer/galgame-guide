@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 
 import { RelatedGames } from "@/components/related-games";
 import { buildMainSiteGameUrl } from "@/lib/config";
-import { getAllGames, getGameBySlug } from "@/lib/games";
+import { getAllGames, getAllSlugs, getGameBySlug } from "@/lib/games";
 import { getRelatedGames } from "@/lib/related-games";
 import {
   buildCanonicalPath,
@@ -16,6 +16,23 @@ import {
 } from "@/lib/seo";
 
 export const revalidate = 86400;
+
+/**
+ * 预渲染最近 500 个作品页。
+ *
+ * 没有 generateStaticParams 时 `[slug]` 是纯动态路由：`revalidate` 完全不生效，
+ * 每个请求都重新 SSR，响应头是 `private, no-store`，Vercel CDN 一律不缓存。
+ * 给出参数后路由变成 ISR —— 预渲染的走 CDN，其余参数首次访问后同样被缓存。
+ *
+ * 只预渲染 500 个而不是全部 3,876 个：构建时长和产物体积都可控，长尾页面
+ * 第一次被访问时生成并缓存，对爬虫和用户的效果一样。
+ */
+const PRERENDER_LIMIT = 500;
+
+export async function generateStaticParams() {
+  const slugs = await getAllSlugs();
+  return slugs.slice(0, PRERENDER_LIMIT).map((slug) => ({ slug }));
+}
 
 export async function generateMetadata({
   params,

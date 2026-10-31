@@ -146,8 +146,34 @@ const safeQuery = async <T>(
   return fallback;
 };
 
+/**
+ * 全库读取的进程内缓存。
+ *
+ * 为什么必须有这一层：每个作品页渲染都要拉全表（3,876 行、约 5.8MB）——
+ * 标签允许集要按全库词频算，相似条目要在全库里比对。React 的 `cache()` 只在
+ * 单个请求内去重，所以此前**每个请求都独立扫一遍全表**，2026-11-01 实测
+ * 生产 TTFB 2.7–4.3 秒、`x-vercel-cache: MISS`，Bing 因此报「爬取容量有限」。
+ *
+ * 不用 `unstable_cache`：它依赖 Vercel Data Cache，构建期不可用，而构建期
+ * 预渲染上千个页面正是最需要它的地方——没有这层缓存，每个页面都要独立扫一遍
+ * 全表，构建会拖到几十分钟。
+ *
+ * TTL 取 5 分钟：页面本身的 ISR 窗口是 24h，缓存再长也只是让 cron 的
+ * revalidatePath 多等一会儿，没有收益。
+ */
+const ALL_GAMES_TTL_MS = 5 * 60 * 1000;
+
+let allGamesCache: { at: number; value: GameRecord[] } | null = null;
+let allGamesInFlight: Promise<GameRecord[]> | null = null;
+
 export const getAllGames = cache(async (): Promise<GameRecord[]> => {
-  return safeQuery(
+  if (allGamesCache && Date.now() - allGamesCache.at < ALL_GAMES_TTL_MS) {
+    return allGamesCache.value;
+  }
+  // 并发请求共用同一次扫描，避免冷启动时几十个请求同时打库
+  if (allGamesInFlight) return allGamesInFlight;
+
+  allGamesInFlight = safeQuery(
     async () => {
       const result = await db.execute("SELECT * FROM games ORDER BY published_at DESC");
       const allowedTags = buildAllowedTags(result.rows.map((row) => parseTags(row.tags)));
@@ -156,7 +182,16 @@ export const getAllGames = cache(async (): Promise<GameRecord[]> => {
     },
     [],
     "getAllGames"
-  );
+  ).then((value) => {
+    allGamesInFlight = null;
+    // 空结果基本只有一种原因：数据库冷启动或网络抖动。
+    // 缓存它会让整站空 5 分钟，所以宁可返回上一份旧数据。
+    if (value.length === 0) return allGamesCache?.value ?? [];
+    allGamesCache = { at: Date.now(), value };
+    return value;
+  });
+
+  return allGamesInFlight;
 });
 
 export const getRecentSlugs = cache(async (limit = 200): Promise<string[]> => {
