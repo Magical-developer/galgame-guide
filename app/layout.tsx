@@ -121,8 +121,13 @@ export default function RootLayout({
         <Navbar />
         {children}
         <Footer />
+        {/* 用 afterInteractive 而不是 lazyOnload：这个站的价值就是回答
+            「Bing 来的流量到底有没有点下载」，脚本在 lazyOnload 下会等到
+            所有资源加载完才跑，用户看完就走的话根本不上报 —— 2026-10-31
+            实测 Bing 后台约 540 点击/天，Umami 只记到 44 访客，差了一个数量级。
+            页面已经走 CDN + ISR，多一个 defer 脚本对 LCP 没有影响。 */}
         <Script
-          strategy="lazyOnload"
+          strategy="afterInteractive"
           src={analytics.scriptSrc}
           data-website-id={analytics.websiteId}
         />
