@@ -48,18 +48,9 @@ async function main() {
   await db.execute(`CREATE INDEX IF NOT EXISTS idx_games_slug ON games(slug)`);
   await db.execute(`CREATE INDEX IF NOT EXISTS idx_games_views ON games(views DESC)`);
 
-  // Create guides table
-  console.log("[DB] Creating 'guides' table...");
-  await db.execute(`
-    CREATE TABLE IF NOT EXISTS guides (
-      slug TEXT PRIMARY KEY,
-      markdown TEXT,
-      provider TEXT,
-      model TEXT,
-      generated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (slug) REFERENCES games(slug) ON DELETE CASCADE
-    )
-  `);
+  // guides 表已于 2026-10-31 删除：3,818 行全部是 provider=fallback-batch、
+  // model=rich-template 的 AI 生成内容，应用从未读取过。站点定位也从「攻略站」
+  // 改成「作品资料库」，不再有生成攻略的环节，所以这里也不再建表。
 
   // Create slug redirects table
   console.log("[DB] Creating 'slug_redirects' table...");

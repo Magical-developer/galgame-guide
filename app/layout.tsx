@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Script from "next/script";
 
 import "@/app/globals.css";
 import { Navbar } from "@/components/navbar";
-import { buildMainSiteFriendUrl, siteConfig } from "@/lib/config";
+import { analytics, buildMainSiteFriendUrl, siteConfig } from "@/lib/config";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.siteUrl),
@@ -118,6 +119,11 @@ export default function RootLayout({
         <Navbar />
         {children}
         <Footer />
+        <Script
+          strategy="lazyOnload"
+          src={analytics.scriptSrc}
+          data-website-id={analytics.websiteId}
+        />
       </body>
     </html>
   );

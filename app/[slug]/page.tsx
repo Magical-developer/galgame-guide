@@ -162,6 +162,10 @@ export default async function GamePage({
               target="_blank"
               rel="noopener noreferrer"
               referrerPolicy="no-referrer"
+              // 全站唯一要回答的问题：这个按钮到底有没有人点。
+              // Umami 的 data-umami-event-* 会作为事件属性一起上报，能按作品归因。
+              data-umami-event="guide-deeplink"
+              data-umami-event-post-id={game.sourceId}
               className="inline-flex w-full items-center justify-center rounded-2xl bg-accent px-6 py-4 text-sm font-semibold tracking-[0.12em] text-black transition hover:bg-accent-strong"
             >
               查看该作品资源 ↗

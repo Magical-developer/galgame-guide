@@ -27,6 +27,20 @@ export const siteConfig = {
 export const absoluteUrl = (pathname: string) =>
   new URL(pathname, siteConfig.siteUrl).toString();
 
+/**
+ * Umami 自建统计（umami.krzacg.com）。
+ *
+ * 卫星站在 Umami 里是独立的 website，ID 和主站不同，两边数据不要混。
+ * 只用来回答一个问题：作品页的主按钮到底有没有人点。
+ */
+export const analytics = {
+  scriptSrc:
+    process.env.NEXT_PUBLIC_UMAMI_SRC ?? "https://umami.krzacg.com/script.js",
+  websiteId:
+    process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID ??
+    "e81c63f4-11b4-4e43-b1d6-781b96664946",
+};
+
 export const buildMainSiteFriendUrl = () => {
   const url = new URL(siteConfig.mainSiteUrl);
   url.searchParams.set("utm_source", "guide");
