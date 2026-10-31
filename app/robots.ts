@@ -8,7 +8,8 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/api/"],
+        // /go 是出站跳转，爬虫跟过去就会看到主站域名 —— 这正是要避免的关联
+        disallow: ["/api/", "/go"],
       },
       // AI 训练/内容抓取爬虫:爬取量大且不遵守频率限制,直接屏蔽。
       // Google-Extended 不影响 Google 搜索收录。

@@ -38,12 +38,18 @@ export const absoluteUrl = (pathname: string) =>
  * 只用来回答一个问题：作品页的主按钮到底有没有人点。
  */
 export const analytics = {
-  scriptSrc:
-    process.env.NEXT_PUBLIC_UMAMI_SRC ?? "https://umami.krzacg.com/script.js",
+  // 同源路径，由 next.config.ts 的 rewrites 代理到 umami.krzacg.com。
+  // 直接在 HTML 里写 umami.krzacg.com 等于每页都暴露一次主站域名家族。
+  scriptSrc: process.env.NEXT_PUBLIC_UMAMI_SRC ?? "/stats/script.js",
   websiteId:
     process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID ??
     "e81c63f4-11b4-4e43-b1d6-781b96664946",
 };
+
+/**
+ * 站内出站跳转路径。主站域名不写进 HTML，原因见 app/go/route.ts。
+ */
+export const buildGoPath = (to: string) => `/go?to=${encodeURIComponent(to)}`;
 
 export const buildMainSiteFriendUrl = () => {
   const url = new URL(siteConfig.mainSiteUrl);

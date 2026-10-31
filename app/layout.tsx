@@ -5,7 +5,7 @@ import Script from "next/script";
 import "@/app/globals.css";
 import { BookmarkHint } from "@/components/bookmark-hint";
 import { Navbar } from "@/components/navbar";
-import { analytics, buildMainSiteFriendUrl, siteConfig } from "@/lib/config";
+import { analytics, buildGoPath, siteConfig } from "@/lib/config";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.siteUrl),
@@ -93,9 +93,10 @@ function Footer() {
               本站只整理资料，不存游戏文件。下载请到资源站。
             </p>
             <a
-              href={buildMainSiteFriendUrl()}
+              href={buildGoPath("site")}
               target="_blank"
-              rel="noopener"
+              rel="nofollow noopener noreferrer"
+              referrerPolicy="no-referrer"
               className="inline-flex text-sm text-accent hover:underline"
             >
               KrzACG 社区 ↗
