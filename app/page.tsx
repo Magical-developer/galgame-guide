@@ -48,7 +48,7 @@ export default async function HomePage() {
     url: siteConfig.siteUrl,
     about: [
       "Galgame Guide",
-      "Galgame 作品索引",
+      "Galgame 作品库",
       "视觉小说目录",
       "作品标签",
       "视觉小说",
@@ -73,30 +73,30 @@ export default async function HomePage() {
       <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-16 px-5 py-8 sm:px-8 lg:px-12">
         <header className="grid gap-8 rounded-[2.5rem] border border-white/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] p-7 shadow-[0_40px_120px_rgba(0,0,0,0.38)] backdrop-blur lg:grid-cols-[1.25fr_0.75fr] lg:p-10">
           <div className="space-y-7">
-            <span className="eyebrow">Galgame / Visual Novel Index</span>
+            <span className="eyebrow">Galgame · 视觉小说</span>
             <div className="space-y-5">
               <h1 className="max-w-4xl font-display text-5xl leading-none text-ink-strong sm:text-6xl lg:text-7xl">
-                把作品放进索引，
+                {allGames.length} 部 Galgame 和视觉小说，
                 <span className="block text-accent">
-                  用可核对的信息做选择。
+                  想玩哪部，先在这儿查清楚。
                 </span>
               </h1>
               <p className="max-w-2xl text-base leading-8 text-ink-soft sm:text-lg">
-                Galgame Guide 已整理 {allGames.length} 个视觉小说与 Galgame 条目。
-                这里展示作品标题、原始概览、标签、热度与更新时间；没有证据的路线、存档和解锁条件不会被写成攻略。
+                搜作品名、题材或平台，能看到简介、类型标签、版本和更新时间。
+                找到想玩的，一键跳到下载页。
               </p>
             </div>
 
             <form action="/archive" method="get" className="flex max-w-2xl flex-col gap-3 sm:flex-row">
-              <label className="sr-only" htmlFor="home-grid-search">搜索作品或标签</label>
+              <label className="sr-only" htmlFor="home-grid-search">搜索作品</label>
               <input
                 id="home-grid-search"
                 name="q"
-                placeholder="搜索作品名、平台、语言或题材"
+                placeholder="搜作品名、题材或平台"
                 className="min-w-0 flex-1 rounded-full border border-white/12 bg-black/25 px-5 py-3 text-sm text-ink-strong outline-none placeholder:text-white/35 focus:border-accent/70"
               />
               <button className="rounded-full bg-accent px-6 py-3 text-sm font-semibold tracking-[0.12em] text-black transition hover:bg-accent-strong">
-                搜索索引
+                搜作品
               </button>
             </form>
 
@@ -115,19 +115,17 @@ export default async function HomePage() {
 
           <aside className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
             {[
-              ["收录作品", `${allGames.length}+`],
-              ["索引方式", "标题 / 标签 / 更新时间"],
-              ["内容原则", "不推断 / 可纠错"],
-            ].map(([label, value]) => (
+              [`${allGames.length}`, "部作品"],
+              ["每天", "有新作品进来"],
+              ["免费", "不用注册"],
+            ].map(([value, label]) => (
               <div
                 key={label}
                 className="rounded-[1.75rem] border border-white/10 bg-black/20 p-5"
               >
-                <p className="text-xs uppercase tracking-[0.25em] text-white/45">
+                <p className="font-display text-3xl text-ink-strong">{value}</p>
+                <p className="mt-2 text-xs tracking-[0.18em] text-white/45">
                   {label}
-                </p>
-                <p className="mt-3 font-display text-3xl text-ink-strong">
-                  {value}
                 </p>
               </div>
             ))}
@@ -137,16 +135,16 @@ export default async function HomePage() {
         <section id="hot-list" className="space-y-8">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div className="space-y-3">
-              <span className="eyebrow">Popular records</span>
+              <span className="eyebrow">热门</span>
               <h2 className="font-display text-4xl text-ink-strong">
-                热门作品档案
+                大家都在看
               </h2>
             </div>
-            <Link 
+            <Link
               href="/archive"
               className="text-sm font-semibold tracking-[0.1em] text-accent hover:underline"
             >
-              查看全部档案 →
+              看全部作品 →
             </Link>
           </div>
 
@@ -160,13 +158,13 @@ export default async function HomePage() {
         <section className="space-y-8">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div className="space-y-3">
-              <span className="eyebrow">Recently updated</span>
+              <span className="eyebrow">新收录</span>
               <h2 className="font-display text-4xl text-ink-strong">
-                最近更新的条目
+                最近收录
               </h2>
             </div>
             <p className="max-w-xl text-sm leading-7 text-white/55">
-              更新时间只反映来源记录发生变化，不代表作品内容或版本一定更新。
+              每天同步新作品，刚进来的会排在这里。
             </p>
           </div>
 
@@ -179,28 +177,28 @@ export default async function HomePage() {
 
         <section className="grid gap-6 rounded-[2.5rem] border border-white/10 bg-black/20 p-6 sm:p-8 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="space-y-5">
-            <span className="eyebrow">Information boundary</span>
+            <span className="eyebrow">怎么用</span>
             <h2 className="font-display text-4xl text-ink-strong">
-              这份索引知道什么，也明确不知道什么。
+              三步找到想玩的
             </h2>
             <p className="text-base leading-8 text-ink-soft">
-              索引的职责是帮助你发现和比较作品，而不是把通用经验包装成具体攻略。未经核实的信息会留空，不会由标签自动补齐。
+              这里只放作品资料和下载入口，不放游戏文件。查资料、看类型、去下载，一条线走完。
             </p>
           </div>
 
           <div className="grid gap-4">
             {[
               {
-                title: "展示来源已有字段",
-                body: "标题、概览、标签、热度和更新时间按原始记录展示，不把推测写成作品事实。",
+                title: "搜作品名",
+                body: "中文名、日文名、英文名都能搜。名字记不全也没关系，打几个字就能翻到。",
               },
               {
-                title: "站内完成发现任务",
-                body: "搜索、标签筛选、排序和相似条目都在 Galgame Guide 内完成，不需要先跳到另一个站点。",
+                title: "看简介和标签",
+                body: "什么类型、哪个平台、什么版本、多久更新过，都写在页面上。",
               },
               {
-                title: "为人工核验留接口",
-                body: "未来只有经过来源标注和人工复核的路线、版本或兼容信息，才会进入可索引的编辑内容。",
+                title: "去下载页",
+                body: "点「查看该作品资源」跳到下载页面。本站不存游戏文件。",
               },
             ].map((item, index) => (
               <article

@@ -13,7 +13,7 @@ export default function NotFound() {
           页面走丢了
         </h1>
         <p className="max-w-md text-ink-soft">
-          你访问的作品条目暂时无法找到。可能是链接已更新，或者该记录已经移出索引。
+          这个页面找不到了。可能链接改过，也可能这部作品已经下架。
         </p>
         <div className="flex flex-wrap gap-3">
           <Link
@@ -26,7 +26,7 @@ export default function NotFound() {
             href="/archive"
             className="rounded-full border border-white/12 px-6 py-3 text-sm tracking-[0.16em] text-white/75 transition hover:border-accent/60 hover:text-ink-strong"
           >
-            浏览作品索引
+            看全部作品
           </Link>
         </div>
       </div>

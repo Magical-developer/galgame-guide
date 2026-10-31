@@ -11,7 +11,7 @@ const stripTrailingSlash = (value: string) => value.replace(/\/+$/, "");
 export const siteConfig = {
   name: "Galgame Guide",
   description:
-    "Galgame Guide 是一个独立的视觉小说与 Galgame 作品索引，提供站内检索、标签筛选、作品概览和相似条目发现。",
+    "收录 3800 多部 Galgame 与视觉小说，可按作品名、类型、平台和语言查找。每部都有简介、类型标签、版本和更新时间。",
   siteUrl: stripTrailingSlash(
     process.env.NEXT_PUBLIC_SITE_URL ?? defaultSiteUrl
   ),

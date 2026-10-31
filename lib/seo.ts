@@ -2,12 +2,12 @@ import { absoluteUrl, siteConfig } from "@/lib/config";
 import type { GameRecord } from "@/lib/types/game";
 
 const sharedKeywords = [
-  "Galgame Guide",
-  "Galgame 索引",
-  "视觉小说目录",
-  "作品标签",
-  "游戏版本情报",
-  "视觉小说推荐",
+  "Galgame",
+  "视觉小说",
+  "Galgame 作品库",
+  "视觉小说作品",
+  "游戏类型",
+  "游戏版本",
 ];
 
 /**
@@ -110,7 +110,7 @@ export const buildGameDescription = (game: GameRecord) => {
     }
   }
 
-  return `${unique} — 在 Galgame Guide 查看作品标签、更新时间、热度与相似条目。`;
+  return `${unique} — 在 Galgame Guide 查看简介、类型标签和下载入口。`;
 };
 
 export const buildGameKeywords = (game: GameRecord) => [
@@ -138,16 +138,17 @@ const toIsoDateTime = (value: string) => {
 };
 
 export const buildHomeTitle = () =>
-  "Galgame Guide｜视觉小说作品发现与标签索引";
+  "Galgame Guide｜Galgame 与视觉小说作品库";
 
 export const buildHomeDescription = () =>
-  "Galgame Guide 提供视觉小说与 Galgame 的站内检索、标签筛选、作品概览和相似条目发现，不根据标签推断未经核实的攻略信息。";
+  "收录 3800 多部 Galgame 与视觉小说，可按作品名、类型、平台和语言查找。每部都有简介、类型标签、版本和更新时间，找到想玩的直接跳下载页。";
 
 export const buildHomeKeywords = () => [
   ...sharedKeywords,
-  "Galgame 作品目录",
-  "视觉小说作品发现",
-  "Galgame 标签筛选",
+  "Galgame 大全",
+  "视觉小说推荐",
+  "Galgame 下载",
+  "汉化游戏",
 ];
 
 /**
@@ -208,7 +209,7 @@ export const buildGameStructuredData = (game: GameRecord) => {
           {
             "@type": "ListItem",
             position: 2,
-            name: "作品索引",
+            name: "全部作品",
             item: absoluteUrl("/archive"),
           },
           { "@type": "ListItem", position: 3, name: game.title },

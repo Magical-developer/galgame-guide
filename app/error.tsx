@@ -12,13 +12,12 @@ export default function ErrorPage({
   return (
     <main className="shell">
       <div className="mx-auto flex min-h-[60vh] w-full max-w-3xl flex-col items-center justify-center gap-6 px-5 py-16 text-center">
-        <span className="eyebrow">Error / 暂时无法读取索引</span>
+        <span className="eyebrow">出错了</span>
         <h1 className="font-display text-4xl text-ink-strong sm:text-5xl">
-          这一页没有读出来
+          这一页没打开
         </h1>
         <p className="max-w-xl text-base leading-8 text-ink-soft">
-          可能是数据源暂时不可用。索引页和作品页会按 ISR 自动恢复，不需要你做什么；
-          如果反复出现，可以稍后再试或回到首页重新检索。
+          可能是网络抖了一下。点下面重试，或者回首页重新搜一次。
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3">
           <button

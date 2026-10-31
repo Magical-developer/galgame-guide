@@ -21,9 +21,9 @@ export async function generateMetadata({
   const params = await searchParams;
   const isFiltered = Boolean(params.q || params.tag || params.sort || Number(params.page) > 1);
   return {
-    title: "作品索引",
+    title: "全部作品",
     description:
-      "按关键词、标签、热度与更新时间浏览 Galgame Guide 收录的视觉小说和 Galgame 作品档案。",
+      "浏览 Galgame Guide 收录的全部 Galgame 与视觉小说，可按作品名、题材或平台查找，也能按热度和更新时间排序。",
     alternates: {
       canonical: buildCanonicalPath("archive"),
     },
@@ -95,23 +95,23 @@ export default async function ArchivePage({
     <main className="shell">
       <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-12 px-5 py-12 sm:px-8 lg:px-12">
         <header className="space-y-4">
-          <span className="eyebrow">Catalog / Index view</span>
+          <span className="eyebrow">全部作品</span>
           <h1 className="font-display text-5xl text-ink-strong sm:text-6xl">
-            作品索引
+            全部作品
           </h1>
           <p className="max-w-2xl text-lg text-ink-soft">
-            用作品名、标签、热度和更新时间缩小范围。当前条件下找到 {total} 个条目。
+            按作品名、题材或平台查找，也能按热度或更新时间排序。当前共 {total} 部。
           </p>
         </header>
 
         <section className="space-y-5 rounded-[2rem] border border-white/10 bg-black/20 p-5 sm:p-7">
           <form method="get" action="/archive" className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_12rem_auto]">
             <label className="space-y-2">
-              <span className="text-xs uppercase tracking-[0.18em] text-white/45">作品或标签</span>
+              <span className="text-xs uppercase tracking-[0.18em] text-white/45">搜作品</span>
               <input
                 name="q"
                 defaultValue={q}
-                placeholder="输入作品名、平台、语言或题材"
+                placeholder="作品名、题材或平台"
                 className="w-full rounded-2xl border border-white/12 bg-black/30 px-4 py-3 text-sm text-ink-strong outline-none placeholder:text-white/35 focus:border-accent/70"
               />
             </label>
@@ -129,7 +129,7 @@ export default async function ArchivePage({
             </label>
             {tag ? <input type="hidden" name="tag" value={tag} /> : null}
             <button className="self-end rounded-2xl bg-accent px-6 py-3 text-sm font-semibold text-black transition hover:bg-accent-strong">
-              筛选索引
+              筛选
             </button>
           </form>
 

@@ -124,7 +124,7 @@ export default async function GamePage({
           </Link>
           <span>/</span>
           <Link href="/archive" className="transition hover:text-ink-strong">
-            作品索引
+            全部作品
           </Link>
           <span>/</span>
           <span className="line-clamp-1 text-ink-strong">{game.title}</span>
@@ -134,7 +134,7 @@ export default async function GamePage({
           <div className="flex flex-wrap items-center gap-3">
             <span className="eyebrow">作品资料</span>
             <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/50">
-              数据来自公开数据源，未经逐条人工核验
+              资料来自公开来源，仅供参考
             </span>
           </div>
 
@@ -145,9 +145,11 @@ export default async function GamePage({
           <section className="mt-8">
             <SectionHeading>作品简介</SectionHeading>
 
-            <p className="mt-4 text-base leading-8 text-ink-soft sm:text-lg">
-              {game.aiIntro ?? game.summary}
-            </p>
+            {game.aiIntro || game.summary ? (
+              <p className="mt-4 text-base leading-8 text-ink-soft sm:text-lg">
+                {game.aiIntro ?? game.summary}
+              </p>
+            ) : null}
 
             {game.aiPoints.length > 0 && (
               <ul className="mt-4 space-y-2 text-sm leading-7 text-ink-soft">
@@ -216,7 +218,7 @@ export default async function GamePage({
               查看该作品资源 ↗
             </a>
             <p className="text-center text-xs leading-6 text-white/40">
-              将跳转到资源站中与《{game.title}》对应的页面。本站只整理作品资料，不托管任何文件。
+              点上面按钮跳到《{game.title}》的下载页面。本站不存游戏文件。
             </p>
           </div>
         </article>

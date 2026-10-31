@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "隐私政策",
-  description: "了解 Galgame Guide 如何收集、使用与保护访问数据。",
+  description: "Galgame Guide 会收集哪些数据、怎么用、怎么关。",
 };
 
 export default function PrivacyPage() {
@@ -19,12 +19,12 @@ export default function PrivacyPage() {
 
           <h2 className="text-2xl font-bold text-ink-strong">1. 信息收集</h2>
           <p>
-            本站是一个内容索引类站点，我们不要求用户注册。我们仅通过标准的服务器日志和第三方分析工具（如 Google Analytics）收集一些基础的匿名信息，包括您的 IP 地址、浏览器类型、访问时长及页面路径。
+            本站不需要注册。我们只通过服务器日志和自建的 Umami 统计了解访问量，记录的是访问了哪些页面、用什么设备，不收集姓名、邮箱等能识别到个人的信息。
           </p>
 
           <h2 className="text-2xl font-bold text-ink-strong">2. Cookie 的使用</h2>
           <p>
-            我们可能使用 Cookie 来提升您的访问体验，例如保存您的阅读偏好。您可以根据需要在浏览器中禁用 Cookie。
+            本站不使用广告 Cookie，也不做跨站追踪。您可以在浏览器里随时禁用 Cookie，不影响正常浏览。
           </p>
 
           <h2 className="text-2xl font-bold text-ink-strong">3. 第三方内容</h2>
@@ -34,7 +34,7 @@ export default function PrivacyPage() {
 
           <h2 className="text-2xl font-bold text-ink-strong">4. 分析与广告</h2>
           <p>
-            本站不加载弹窗广告、Popunder 或广告联盟脚本。若未来引入分析或广告合作，将在此处说明其数据用途与退出方式。
+            本站不加载弹窗广告、Popunder 或广告联盟脚本。若未来引入，会在此处说明数据用途和关闭方式。
           </p>
 
           <h2 className="text-2xl font-bold text-ink-strong">5. 政策更新</h2>

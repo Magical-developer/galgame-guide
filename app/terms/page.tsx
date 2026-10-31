@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "服务条款",
-  description: "阅读 Galgame Guide 的服务说明、使用限制、知识产权声明与第三方服务约定。",
+  description: "Galgame Guide 的服务说明、使用限制、版权声明与免责条款。",
 };
 
 export default function TermsPage() {
@@ -22,7 +22,7 @@ export default function TermsPage() {
 
           <h2 className="text-2xl font-bold text-ink-strong">1. 服务说明</h2>
           <p>
-            Galgame Guide 是一个专注视觉小说（Visual Novel）与 Galgame 的作品发现索引，提供搜索、标签筛选、作品概览与相似条目浏览。
+            Galgame Guide 是一个 Galgame 与视觉小说作品库，提供作品搜索、类型筛选和作品资料浏览。本站只整理资料和下载入口，不存游戏文件。
           </p>
 
           <h2 className="text-2xl font-bold text-ink-strong">2. 使用限制</h2>
@@ -55,7 +55,7 @@ export default function TermsPage() {
 
           <h2 className="text-2xl font-bold text-ink-strong">7. 联系我们</h2>
           <p>
-            如果您对本服务条款有任何疑问，请通过<a href="mailto:contact@galgame-guide.vercel.app" className="text-accent hover:underline">contact@galgame-guide.vercel.app</a>联系我们。
+            如果您对本服务条款有任何疑问，请通过<a href="mailto:dmca@krzacg.com" className="text-accent hover:underline">dmca@krzacg.com</a>联系我们。
           </p>
         </section>
       </div>

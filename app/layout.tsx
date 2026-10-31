@@ -66,14 +66,14 @@ function Footer() {
           <div className="space-y-4">
             <h3 className="font-display text-xl text-ink-strong">{siteConfig.name}</h3>
             <p className="text-sm leading-6 text-ink-soft">
-              独立的视觉小说与 Galgame 作品发现索引，只展示来源已有字段和经过核验的编辑信息。
+              收录 Galgame 与视觉小说的作品资料，帮你在下载之前先看清楚是什么游戏。
             </p>
           </div>
           <div className="space-y-4">
             <h4 className="text-xs font-bold uppercase tracking-widest text-white/40">快速导航</h4>
             <ul className="grid gap-2 text-sm text-ink-soft">
               <li><Link href="/" className="hover:text-accent">网站首页</Link></li>
-              <li><Link href="/archive" className="hover:text-accent">作品索引</Link></li>
+              <li><Link href="/archive" className="hover:text-accent">全部作品</Link></li>
             </ul>
           </div>
           <div className="space-y-4">
@@ -88,7 +88,7 @@ function Footer() {
           <div className="space-y-4">
             <h4 className="text-xs font-bold uppercase tracking-widest text-white/40">合作伙伴</h4>
             <p className="text-sm text-ink-soft">
-              Galgame Guide 独立提供发现与索引功能。外部合作站点仅作为普通友链列出。
+              本站只整理资料，不存游戏文件。下载请到资源站。
             </p>
             <a
               href={buildMainSiteFriendUrl()}
