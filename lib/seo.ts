@@ -49,18 +49,3 @@ export const buildHomeKeywords = () => [
   "视觉小说作品发现",
   "Galgame 标签筛选",
 ];
-
-export const buildTwitterMeta = ({
-  title,
-  description,
-  image,
-}: {
-  title: string;
-  description: string;
-  image?: string;
-}) => ({
-  card: "summary_large_image" as const,
-  title,
-  description,
-  images: image ? [image] : undefined,
-});

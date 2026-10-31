@@ -34,3 +34,20 @@ export const buildMainSiteFriendUrl = () => {
   url.searchParams.set("utm_campaign", "friend_link");
   return url.toString();
 };
+
+/**
+ * 作品页的主行动链接：直接落到主站对应的帖子详情，而不是首页。
+ *
+ * 2026-10-31 改：此前所有作品页的「查看资源」都指向主站首页，用户从
+ * Bing 搜「某作品名」进来、点按钮又回到首页要重搜一遍，等于白走一趟。
+ * sourceId 就是主站帖子的 _id，实测抽样 8/8 都能打开。
+ */
+export const buildMainSiteGameUrl = (sourceId: string) => {
+  if (!sourceId) return buildMainSiteFriendUrl();
+  const url = new URL(`/post/${encodeURIComponent(sourceId)}`, siteConfig.mainSiteUrl);
+  url.searchParams.set("utm_source", "guide");
+  url.searchParams.set("utm_medium", "referral");
+  // 和页脚友链分开计，否则两类流量在统计里完全混在一起
+  url.searchParams.set("utm_campaign", "game_deeplink");
+  return url.toString();
+};

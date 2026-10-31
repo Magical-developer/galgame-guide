@@ -161,8 +161,8 @@ export default async function ArchivePage({
         </section>
 
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {games.map((game, index) => (
-            <GameCard key={game.slug} game={game} priority={index < 6} />
+          {games.map((game) => (
+            <GameCard key={game.slug} game={game} />
           ))}
         </div>
 

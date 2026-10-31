@@ -151,8 +151,8 @@ export default async function HomePage() {
           </div>
 
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {featuredGames.map((game, index) => (
-              <GameCard key={game.slug} game={game} priority={index < 3} />
+            {featuredGames.map((game) => (
+              <GameCard key={game.slug} game={game} />
             ))}
           </div>
         </section>

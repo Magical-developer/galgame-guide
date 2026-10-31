@@ -1,24 +1,62 @@
 import { cache } from "react";
 import { db } from "./db";
+import { buildSummaryText, cleanTitle, filterTags, isBlockedTag } from "@/lib/content-clean";
 import type { GameRecord } from "@/lib/types/game";
 
 type RawRow = Record<string, unknown>;
 
-// Helper to map DB row to GameRecord
-const mapRowToGame = (row: RawRow): GameRecord => ({
-  sourceId: String(row.source_id || ""),
-  slug: String(row.slug || ""),
-  title: String(row.title || ""),
-  tags: JSON.parse(String(row.tags || "[]")),
-  summary: String(row.summary || ""),
-  cover: String(row.cover || ""),
-  download: String(row.download || ""),
-  downloadLabel: String(row.download_label || ""),
-  views: Number(row.views || 0),
-  createdAt: String(row.created_at || ""),
-  updatedAt: String(row.updated_at || ""),
-  sourceHash: String(row.source_hash || ""),
-});
+function parseTags(raw: unknown): string[] {
+  const text = String(raw ?? "[]");
+  try {
+    const parsed = JSON.parse(text);
+    return Array.isArray(parsed) ? parsed.map((item) => String(item)) : [];
+  } catch {
+    return text.split(",");
+  }
+}
+
+/**
+ * 标签允许集 = 全库高频词的前 300 个，再交给成人词黑名单剔除。
+ *
+ * 为什么还要频率门槛：全库 3,809 个 distinct 标签，纯黑名单挡不住长尾里的
+ * 成人词（实测漏掉 `BBC` 这类只出现一两次的缩写）。高频词天然是类型/平台/语言
+ * 这类结构化标签，长尾则多是系列名和杂项，砍掉既降风险也不损失信息。
+ * 用运行时统计而不是硬编码清单：上游每天同步，词表会变。
+ */
+const TAG_FREQUENCY_LIMIT = 300;
+
+function buildAllowedTags(tagLists: string[][]): Set<string> {
+  const counts = new Map<string, number>();
+  for (const list of tagLists) {
+    for (const tag of list) {
+      const key = tag.trim().toLocaleLowerCase("zh-CN");
+      if (!key) continue;
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+  }
+  const top = [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, TAG_FREQUENCY_LIMIT)
+    .map(([key]) => key);
+  return new Set(top.filter((key) => !isBlockedTag(key)));
+}
+
+// 清洗放在这里而不是写库层：Vercel Cron 每天重新灌一遍上游数据，
+// 在数据库里洗一次第二天就被覆盖回去了。
+const mapRowToGame = (row: RawRow, allowedTags: Set<string>): GameRecord => {
+  const title = cleanTitle(String(row.title || ""));
+  return {
+    sourceId: String(row.source_id || ""),
+    slug: String(row.slug || ""),
+    title,
+    tags: filterTags(parseTags(row.tags), allowedTags),
+    summary: buildSummaryText(title, String(row.summary || "")),
+    views: Number(row.views || 0),
+    createdAt: String(row.created_at || ""),
+    updatedAt: String(row.updated_at || ""),
+    sourceHash: String(row.source_hash || ""),
+  };
+};
 
 const ASCII_REGEX = /^[\x00-\x7F]+$/;
 
@@ -81,7 +119,8 @@ export const getAllGames = cache(async (): Promise<GameRecord[]> => {
   return safeQuery(
     async () => {
       const result = await db.execute("SELECT * FROM games ORDER BY published_at DESC");
-      const games = result.rows.map(mapRowToGame);
+      const allowedTags = buildAllowedTags(result.rows.map((row) => parseTags(row.tags)));
+      const games = result.rows.map((row) => mapRowToGame(row, allowedTags));
       return dedupeBySourceId(games);
     },
     [],
@@ -92,14 +131,8 @@ export const getAllGames = cache(async (): Promise<GameRecord[]> => {
 export const getRecentSlugs = cache(async (limit = 200): Promise<string[]> => {
   return safeQuery(
     async () => {
-      const result = await db.execute({
-        sql: "SELECT slug, source_id, updated_at, created_at FROM games ORDER BY published_at DESC",
-        args: [],
-      });
-      const games = result.rows.map(mapRowToGame);
-      return dedupeBySourceId(games)
-        .slice(0, limit)
-        .map((game) => game.slug);
+      const games = await getAllGames();
+      return games.slice(0, limit).map((game) => game.slug);
     },
     [],
     "getRecentSlugs"
@@ -121,14 +154,9 @@ export const getGamesPaginated = cache(
   async (page = 1, pageSize = 48): Promise<GameRecord[]> => {
     return safeQuery(
       async () => {
-        const result = await db.execute({
-          sql: "SELECT * FROM games ORDER BY published_at DESC",
-          args: [],
-        });
-        const games = result.rows.map(mapRowToGame);
-        const deduped = dedupeBySourceId(games);
+        const games = await getAllGames();
         const offset = (page - 1) * pageSize;
-        return deduped.slice(offset, offset + pageSize);
+        return games.slice(offset, offset + pageSize);
       },
       [],
       "getGamesPaginated"
@@ -207,12 +235,8 @@ export const getTopTags = cache(async (limit = 16) => {
 export const getFeaturedGames = cache(async (limit = 9): Promise<GameRecord[]> => {
   return safeQuery(
     async () => {
-      const result = await db.execute({
-        sql: "SELECT * FROM games ORDER BY views DESC",
-        args: [],
-      });
-      const games = result.rows.map(mapRowToGame);
-      return dedupeBySourceId(games).slice(0, limit);
+      const games = await getAllGames();
+      return [...games].sort((a, b) => b.views - a.views).slice(0, limit);
     },
     [],
     "getFeaturedGames"
@@ -222,12 +246,8 @@ export const getFeaturedGames = cache(async (limit = 9): Promise<GameRecord[]> =
 export const getGameBySlug = cache(async (slug: string): Promise<GameRecord | null> => {
   return safeQuery(
     async () => {
-      const result = await db.execute({
-        sql: "SELECT * FROM games WHERE slug = ?",
-        args: [slug],
-      });
-      if (result.rows.length === 0) return null;
-      return mapRowToGame(result.rows[0]);
+      const games = await getAllGames();
+      return games.find((game) => game.slug === slug) ?? null;
     },
     null,
     `getGameBySlug(${slug})`
