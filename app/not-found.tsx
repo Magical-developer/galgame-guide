@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "页面未找到 | Galgame Guide",
+  title: "页面未找到",
 };
 
 export default function NotFound() {

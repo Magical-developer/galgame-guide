@@ -21,7 +21,7 @@ export async function generateMetadata({
   const params = await searchParams;
   const isFiltered = Boolean(params.q || params.tag || params.sort || Number(params.page) > 1);
   return {
-    title: "作品索引 | Galgame Guide",
+    title: "作品索引",
     description:
       "按关键词、标签、热度与更新时间浏览 Galgame Guide 收录的视觉小说和 Galgame 作品档案。",
     alternates: {

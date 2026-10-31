@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { ReactNode } from "react";
 
 import { RelatedGames } from "@/components/related-games";
-import { buildMainSiteGameUrl, siteConfig } from "@/lib/config";
+import { buildMainSiteGameUrl } from "@/lib/config";
 import { getAllGames, getGameBySlug } from "@/lib/games";
 import { getRelatedGames } from "@/lib/related-games";
 import {
   buildCanonicalPath,
   buildGameDescription,
   buildGameKeywords,
+  buildGameStructuredData,
   buildGameTitle,
 } from "@/lib/seo";
 
@@ -32,7 +34,9 @@ export async function generateMetadata({
   const canonical = buildCanonicalPath(game.slug);
 
   return {
-    title,
+    // absolute 绕开 layout 的 `%s | Galgame Guide` 模板：作品名长度不可控，
+    // 交给 buildGameTitle 自己决定要不要带品牌后缀，才能保证不超过 70 字符。
+    title: { absolute: title },
     description,
     keywords: buildGameKeywords(game),
     alternates: { canonical },
@@ -59,6 +63,21 @@ function formatDate(value: string) {
   return Number.isNaN(date.getTime()) ? "未提供" : date.toLocaleDateString("zh-CN");
 }
 
+/**
+ * 页内小节标题。爬虫靠 h2 理解「这一页由哪几块内容组成」，
+ * 之前整页只有 h1 和「相似条目」一个 h2，中间的信息块对爬虫是不可分的。
+ */
+function SectionHeading({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="h-2 w-2 rounded-full bg-accent" />
+      <h2 className="font-display text-xl tracking-[0.08em] text-ink-strong">
+        {children}
+      </h2>
+    </div>
+  );
+}
+
 export default async function GamePage({
   params,
 }: {
@@ -73,21 +92,7 @@ export default async function GamePage({
   if (!game) notFound();
 
   const relatedGames = getRelatedGames(game, allGames);
-  const canonical = `${siteConfig.siteUrl}/${game.slug}`;
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "CreativeWork",
-    name: game.title,
-    description: game.summary,
-    genre: game.tags,
-    dateModified: game.updatedAt || undefined,
-    mainEntityOfPage: canonical,
-    isPartOf: {
-      "@type": "CollectionPage",
-      name: siteConfig.name,
-      url: siteConfig.siteUrl,
-    },
-  };
+  const jsonLd = buildGameStructuredData(game);
 
   return (
     <main className="shell">
@@ -120,52 +125,64 @@ export default async function GamePage({
             {game.title}
           </h1>
 
-          <p className="mt-5 text-base leading-8 text-ink-soft sm:text-lg">
-            {game.aiIntro ?? game.summary}
-          </p>
+          <section className="mt-8">
+            <SectionHeading>作品简介</SectionHeading>
 
-          {game.aiPoints.length > 0 && (
-            <ul className="mt-5 space-y-2 text-sm leading-7 text-ink-soft">
-              {game.aiPoints.map((point) => (
-                <li key={point} className="flex gap-2.5">
-                  <span className="mt-2.5 size-1.5 shrink-0 rounded-full bg-accent" />
-                  <span>{point}</span>
-                </li>
-              ))}
-            </ul>
-          )}
+            <p className="mt-4 text-base leading-8 text-ink-soft sm:text-lg">
+              {game.aiIntro ?? game.summary}
+            </p>
+
+            {game.aiPoints.length > 0 && (
+              <ul className="mt-4 space-y-2 text-sm leading-7 text-ink-soft">
+                {game.aiPoints.map((point) => (
+                  <li key={point} className="flex gap-2.5">
+                    <span className="mt-2.5 size-1.5 shrink-0 rounded-full bg-accent" />
+                    <span>{point}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
 
           {game.tags.length > 0 && (
-            <div className="mt-7 flex flex-wrap gap-2">
-              {game.tags.map((tag) => (
-                <Link
-                  key={tag}
-                  href={`/archive?tag=${encodeURIComponent(tag)}`}
-                  className="rounded-full border border-white/10 px-3 py-1 text-xs tracking-[0.12em] text-white/75 transition hover:border-accent/55 hover:text-accent"
-                >
-                  {tag}
-                </Link>
-              ))}
-            </div>
+            <section className="mt-8">
+              <SectionHeading>类型标签</SectionHeading>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                {game.tags.map((tag) => (
+                  <Link
+                    key={tag}
+                    href={`/archive?tag=${encodeURIComponent(tag)}`}
+                    className="rounded-full border border-white/10 px-3 py-1 text-xs tracking-[0.12em] text-white/75 transition hover:border-accent/55 hover:text-accent"
+                  >
+                    {tag}
+                  </Link>
+                ))}
+              </div>
+            </section>
           )}
 
-          <dl className="mt-8 grid gap-4 sm:grid-cols-3">
-            {[
-              ["热度", game.views.toLocaleString()],
-              ["首次收录", formatDate(game.createdAt)],
-              ["资料更新", formatDate(game.updatedAt)],
-            ].map(([label, value]) => (
-              <div
-                key={label}
-                className="rounded-3xl border border-white/10 bg-black/20 p-4"
-              >
-                <dt className="text-xs uppercase tracking-[0.2em] text-white/45">
-                  {label}
-                </dt>
-                <dd className="mt-2 text-sm text-ink-strong">{value}</dd>
-              </div>
-            ))}
-          </dl>
+          <section className="mt-8">
+            <SectionHeading>收录信息</SectionHeading>
+
+            <dl className="mt-4 grid gap-4 sm:grid-cols-3">
+              {[
+                ["热度", game.views.toLocaleString()],
+                ["首次收录", formatDate(game.createdAt)],
+                ["资料更新", formatDate(game.updatedAt)],
+              ].map(([label, value]) => (
+                <div
+                  key={label}
+                  className="rounded-3xl border border-white/10 bg-black/20 p-4"
+                >
+                  <dt className="text-xs uppercase tracking-[0.2em] text-white/45">
+                    {label}
+                  </dt>
+                  <dd className="mt-2 text-sm text-ink-strong">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
 
           <div className="mt-8 space-y-3 border-t border-white/10 pt-8">
             <a

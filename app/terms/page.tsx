@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "服务条款 | Galgame Guide",
+  title: "服务条款",
   description: "阅读 Galgame Guide 的服务说明、使用限制、知识产权声明与第三方服务约定。",
 };
 
