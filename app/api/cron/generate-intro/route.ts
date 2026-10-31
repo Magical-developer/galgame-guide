@@ -73,6 +73,10 @@ export async function GET(request: Request) {
       revalidatePath("/");
       revalidatePath("/archive");
 
+      // 作品页是 24h 的 ISR 缓存，不逐个失效的话，新介绍要等一天才可见 ——
+      // 「每天都有更新」这个信号就断了。只失效本次真改过的页面。
+      for (const slug of stats.writtenSlugs) revalidatePath(`/${slug}`);
+
       // 介绍被重写 = 这些页面内容真的变了，主动推给 Bing，不用等它排到抓取队列。
       // submitSlugs 内部吞掉异常：推送失败不能让已经写好的数据被当成任务失败。
       await submitSlugs({

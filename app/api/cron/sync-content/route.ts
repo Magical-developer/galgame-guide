@@ -61,6 +61,10 @@ export async function GET(request: Request) {
       revalidatePath("/");
       revalidatePath("/archive");
 
+      // 作品页是 24h 的 ISR 缓存，新增/更新的帖子必须逐个失效，
+      // 否则新页面的内容要等一天才生效。
+      for (const slug of stats.changedSlugs) revalidatePath(`/${slug}`);
+
       // 新增/更新过的作品页主动推给 Bing。只推本次真写库的 slug ——
       // 重复提交未变更的 URL 会被 IndexNow 判滥用。
       await submitSlugs({
