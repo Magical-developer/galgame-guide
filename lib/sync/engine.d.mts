@@ -8,6 +8,7 @@ export type SyncStats = {
   pages: number;
   stoppedEarly: boolean;
   dryRun: boolean;
+  changedSlugs: string[];
 };
 
 export type RunCatalogSyncOptions = {

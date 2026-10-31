@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 
 import { siteConfig } from "@/lib/config";
 import { db } from "@/lib/db";
+import { submitSlugs } from "@/lib/indexnow.mjs";
 import { runIntroGeneration } from "@/lib/intro/engine.mjs";
 
 export const maxDuration = 60;
@@ -62,7 +63,7 @@ export async function GET(request: Request) {
       limit: DAILY_LIMIT,
       accountId,
       apiToken,
-      model: process.env.CLOUDFLARE_AI_MODEL ?? "@cf/openai/gpt-oss-120b",
+      model: process.env.CLOUDFLARE_AI_MODEL ?? "@cf/openai/gpt-oss-20b",
       dryRun,
       log: (message) => console.log(message),
     });
@@ -71,6 +72,15 @@ export async function GET(request: Request) {
       // 新介绍落地就让首页与索引页重建，不必等 ISR 窗口
       revalidatePath("/");
       revalidatePath("/archive");
+
+      // 介绍被重写 = 这些页面内容真的变了，主动推给 Bing，不用等它排到抓取队列。
+      // submitSlugs 内部吞掉异常：推送失败不能让已经写好的数据被当成任务失败。
+      await submitSlugs({
+        siteUrl: siteConfig.siteUrl,
+        key: siteConfig.indexNowKey,
+        slugs: stats.writtenSlugs,
+        log: (message) => console.log(message),
+      });
     }
 
     const durationMs = Date.now() - startedAt;

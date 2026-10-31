@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 
 import { siteConfig } from "@/lib/config";
 import { db } from "@/lib/db";
+import { submitSlugs } from "@/lib/indexnow.mjs";
 import { runCatalogSync } from "@/lib/sync/engine.mjs";
 
 export const maxDuration = 60;
@@ -59,6 +60,15 @@ export async function GET(request: Request) {
     if (!dryRun) {
       revalidatePath("/");
       revalidatePath("/archive");
+
+      // 新增/更新过的作品页主动推给 Bing。只推本次真写库的 slug ——
+      // 重复提交未变更的 URL 会被 IndexNow 判滥用。
+      await submitSlugs({
+        siteUrl: siteConfig.siteUrl,
+        key: siteConfig.indexNowKey,
+        slugs: stats.changedSlugs,
+        log: (message) => console.log(message),
+      });
     }
 
     const durationMs = Date.now() - startedAt;

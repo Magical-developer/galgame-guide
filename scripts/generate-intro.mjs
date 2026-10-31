@@ -49,7 +49,7 @@ const stats = await runIntroGeneration({
   limit,
   accountId,
   apiToken,
-  model: process.env.CLOUDFLARE_AI_MODEL ?? "@cf/openai/gpt-oss-120b",
+  model: process.env.CLOUDFLARE_AI_MODEL ?? "@cf/openai/gpt-oss-20b",
   dryRun,
   log: (message) => console.log(message),
 });

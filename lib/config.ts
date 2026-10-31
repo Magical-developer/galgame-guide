@@ -1,5 +1,7 @@
 // 部署平台会提供生产域名（VERCEL_PROJECT_PRODUCTION_URL）与本次部署域名（VERCEL_URL）。
 // 没有显式配置时用它们兜底，避免构建产物里出现 http://localhost:3000 的 canonical / sitemap / robots。
+import { INDEXNOW_KEY } from "@/lib/indexnow.mjs";
+
 const vercelHost =
   process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL ?? "";
 const defaultSiteUrl = vercelHost ? `https://${vercelHost}` : "http://localhost:3000";
@@ -22,6 +24,8 @@ export const siteConfig = {
       "https://service.krzacg.com/api/posts/latest"
   ),
   cronSecret: process.env.CRON_SECRET ?? "",
+  // IndexNow 归属校验 key。定义在 lib/indexnow.mjs（脚本和站点共用同一份）。
+  indexNowKey: process.env.INDEXNOW_KEY ?? INDEXNOW_KEY,
 };
 
 export const absoluteUrl = (pathname: string) =>

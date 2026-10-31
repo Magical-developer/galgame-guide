@@ -11,7 +11,8 @@
     "intro:gen": "node scripts/generate-intro.mjs",
     "dedupe:games": "node scripts/dedupe-games.mjs",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "indexnow:all": "node scripts/indexnow-submit.mjs"
   },
   "dependencies": {
     "@libsql/client": "^0.17.2",
