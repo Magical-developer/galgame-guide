@@ -7,21 +7,27 @@ import { db } from "@/lib/db";
 import { submitSlugs } from "@/lib/indexnow.mjs";
 import { runIntroGeneration } from "@/lib/intro/engine.mjs";
 
-export const maxDuration = 60;
+// Vercel Hobby 的函数上限是 300s（Fluid Compute 之后不再是 60s），
+// 见 https://vercel.com/docs/functions/limitations 。原来按 60s 排的日产量
+// 只有 40 条，2,600 多条存量要跑两个多月。
+export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
 /**
- * 每天补一批中性作品介绍。
+ * 每天把 Cloudflare 免费额度用满。
  *
- * 为什么要按天而不是一次跑完：
- *   1. Cloudflare Workers AI 免费额度按天算，攒着跑会撞配额；
- *   2. 「站点每天都有新内容」本身就是给爬虫的更新信号，一次跑完等于没信号。
+ * 配额实测：10,000 neurons/天 ÷ 20 neurons/条 ≈ 500 条/天。跑不满就是白扔。
  *
- * 2026-11-01 实测：并发 4 时每条约 3.6s，100 条跑 90.8s、0 失败、未撞 429。
- * 40 条 ≈ 36s，留足 60s 上限的余量。存量补齐靠本地 `pnpm intro:gen --limit=N`
- * 批量跑，不受函数时限约束。
+ * 吞吐实测：并发 4 时每条约 3.6s。450 条在并发 10 下约 163s，
+ * 落在 300s 的函数上限内，留足余量。存量 2,600 多条约 6 天补完。
+ *
+ * 为什么仍然按天跑而不是一次灌完：额度是每天给的，攒着跑只会撞 429；
+ * 而且「站点每天都有新内容」本身就是给爬虫的更新信号。
  */
-const DAILY_LIMIT = Number(process.env.CRON_INTRO_LIMIT ?? 40);
+const DAILY_LIMIT = Number(process.env.CRON_INTRO_LIMIT ?? 450);
+
+/** 并发。抬到 10 是为了在 300s 内跑完 450 条；再高容易撞 Cloudflare 的速率限制。 */
+const CONCURRENCY = Number(process.env.CRON_INTRO_CONCURRENCY ?? 10);
 
 function isAuthorized(authorization: string | null, userAgent: string | null) {
   if (siteConfig.cronSecret) {
@@ -67,6 +73,7 @@ export async function GET(request: Request) {
       accountId,
       apiToken,
       model: process.env.CLOUDFLARE_AI_MODEL ?? "@cf/openai/gpt-oss-20b",
+      concurrency: CONCURRENCY,
       dryRun,
       log: (message) => console.log(message),
     });
